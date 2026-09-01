@@ -12,6 +12,11 @@ Agent 在每一步先通过 LLM 思考接下来做什么，然后执行工具调
 import re
 from typing import Optional
 
+import os
+import sys
+# 将项目根目录加入 sys.path，使本脚本可在任意工作目录运行
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")))
+
 from utils.llm_client import LLMClient
 
 

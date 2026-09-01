@@ -15,12 +15,15 @@
 .vscode
 template
 AGENTS.md
+.env
+__pycache__/
 
 ### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
 *.ipr
+
 
 ### NetBeans ###
 /nbproject/private/
