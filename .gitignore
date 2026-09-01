@@ -1,0 +1,38 @@
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.trae
+.sts4-cache
+.idea
+.mybatis
+.vscode
+template
+AGENTS.md
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+.idea/
+xr-com-api/target/
+xr-com-service/target/
+xr-com-test/target/
+xr-com.iml
+!.gitignore
