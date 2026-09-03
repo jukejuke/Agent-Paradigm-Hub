@@ -10,7 +10,12 @@ Plan-and-Execute Agent - 原生实现
 """
 
 import json
+import os
+import sys
 from typing import Optional
+
+# 将项目根目录加入 sys.path，使本脚本可在任意工作目录运行
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")))
 
 from utils.llm_client import LLMClient
 
@@ -24,9 +29,9 @@ def search_database(query: str) -> str:
     return f"[数据库结果] 查询 '{query}' 成功，找到 3 条相关记录。"
 
 
-def send_email(to: str, content: str) -> str:
+def send_email(params: str) -> str:
     """模拟发送邮件工具"""
-    return f"[邮件结果] 已向 {to} 发送邮件，内容: {content[:30]}..."
+    return f"[邮件结果] 已按参数发送邮件: {params[:30]}..."
 
 
 def generate_report(data: str) -> str:
@@ -52,7 +57,7 @@ class PlanAndExecuteAgent:
 
 可用工具:
 - search_database(query): 从数据库搜索信息
-- send_email(to, content): 发送邮件
+- send_email(params): 发送邮件
 - generate_report(data): 基于数据生成报告
 
 请以 JSON 格式输出计划，格式如下:
