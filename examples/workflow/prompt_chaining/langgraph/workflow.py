@@ -15,6 +15,12 @@ from langgraph.graph import StateGraph, END, START
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from pathlib import Path
+from dotenv import load_dotenv
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
+
 
 class PromptChainingState(TypedDict):
     """Prompt Chaining 图的状态定义"""
@@ -26,7 +32,7 @@ class PromptChainingState(TypedDict):
 
 
 # 统一模型：默认 gpt-4o-mini，可用环境变量 OPENAI_MODEL 覆盖
-LLM = ChatOpenAI(model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"), temperature=0.7)
+LLM = ChatOpenAI(model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"), api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL"), temperature=0.7)
 
 
 def outline_node(state: PromptChainingState) -> dict:
