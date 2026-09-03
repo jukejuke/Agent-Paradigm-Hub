@@ -3,15 +3,20 @@ ReAct (Reason + Act) Agent - LangChain 实现
 ==============================================
 
 使用 LangChain 框架实现的 ReAct Agent。
-LangChain 内置了 AgentExecutor 来处理 ReAct 逻辑。
+LangChain 1.x 使用 create_agent（底层基于 langgraph 状态图）来处理 ReAct 逻辑。
 """
 
-from typing import Optional
+import os
+from pathlib import Path
 
-from langchain.agents import AgentExecutor, create_react_agent
+from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import AIMessage, ToolMessage
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -64,79 +69,82 @@ TOOLS = [web_search, calculator]
 # ReAct Agent 实现
 # ==============================================================================
 
-def create_react_agent_executor(
+def build_react_agent(
     model_name: str = "gpt-4o-mini",
     temperature: float = 0.7,
-    max_iterations: int = 10,
-) -> AgentExecutor:
+):
     """
-    创建 LangChain ReAct Agent 执行器
+    创建基于 LangChain create_agent 的 ReAct Agent（底层为 langgraph 状态图）
 
     Args:
         model_name: 使用的模型名称
         temperature: 温度参数
-        max_iterations: 最大迭代次数
 
     Returns:
-        配置好的 AgentExecutor 实例
+        编译后的 ReAct Agent 状态图
     """
-    # 初始化 LLM
-    llm = ChatOpenAI(model=model_name, temperature=temperature)
-
-    # 使用 LangChain 内置的 ReAct prompt
-    template = """Answer the following questions as best you can. You have access to the following tools:
-
-{tools}
-
-Use the following format:
-
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
-
-Begin!
-
-Question: {input}
-Thought: {agent_scratchpad}"""
-
-    prompt = ChatPromptTemplate.from_template(template)
-
-    # 创建 ReAct Agent
-    agent = create_react_agent(llm, TOOLS, prompt)
-
-    # 创建 AgentExecutor
-    agent_executor = AgentExecutor(
-        agent=agent,
-        tools=TOOLS,
-        verbose=True,
-        max_iterations=max_iterations,
-        handle_parsing_errors=True,
+    # 初始化 LLM（从 .env 读取 api_key / base_url / model）
+    llm = ChatOpenAI(
+        model=os.getenv("OPENAI_MODEL", model_name),
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL"),
+        temperature=temperature,
     )
 
-    return agent_executor
+    # 使用 LangChain 1.x 的 create_agent 构建 ReAct Agent
+    # 工具调用协议由框架自动处理，system_prompt 仅约束推理/输出风格
+    agent = create_agent(
+        model=llm,
+        tools=TOOLS,
+        system_prompt=(
+            "你是一个 ReAct（Reason + Act）智能体。请遵循以下格式逐步推理并解决问题：\n"
+            "Thought: 思考下一步该做什么\n"
+            "Action: 选择要调用的工具\n"
+            "Action Input: 工具入参\n"
+            "Observation: 工具返回结果\n"
+            "……（可多轮重复）\n"
+            "Final Answer: 给出最终答案"
+        ),
+    )
+
+    return agent
 
 
-def run(question: str, agent_executor: Optional[AgentExecutor] = None) -> str:
+def run(question: str, agent=None) -> str:
     """
-    运行 ReAct Agent 解决问题
+    运行 ReAct Agent，打印中间思考过程并返回最终答案
 
     Args:
         question: 用户的问题
-        agent_executor: Agent 执行器，默认创建新实例
+        agent: 编译后的 ReAct Agent，默认创建新实例
 
     Returns:
         最终答案字符串
     """
-    if agent_executor is None:
-        agent_executor = create_react_agent_executor()
+    if agent is None:
+        agent = build_react_agent()
 
-    result = agent_executor.invoke({"input": question})
-    return result["output"]
+    final_answer = ""
+    # 以 updates 模式逐步输出每个节点的状态更新，从而观察 ReAct 的思考过程
+    for chunk in agent.stream(
+        {"messages": [{"role": "user", "content": question}]},
+        stream_mode="updates",
+    ):
+        for update in chunk.values():
+            for msg in update.get("messages", []):
+                # AI 消息：展示模型的思考与工具调用决策
+                if isinstance(msg, AIMessage):
+                    if msg.tool_calls:
+                        for tc in msg.tool_calls:
+                            print(f"Thought: 调用工具 {tc['name']}，参数 {tc['args']}")
+                    elif msg.content:
+                        final_answer = msg.content
+                        print(f"Final Answer: {msg.content}")
+                # 工具消息：展示工具执行结果
+                elif isinstance(msg, ToolMessage):
+                    print(f"Observation ({msg.name}): {msg.content}\n")
+
+    return final_answer
 
 
 # ==============================================================================
