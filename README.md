@@ -3,9 +3,10 @@
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![LLM](https://img.shields.io/badge/LLM-OpenAI%20%7C%20Anthropic-green)
 ![LangChain](https://img.shields.io/badge/Built%20with-LangChain-orange)
+![LangGraph](https://img.shields.io/badge/Built%20with-LangGraph-purple)
 ![License](https://img.shields.io/badge/License-TBD-lightgrey)
 
-> **一站式学习 10 种主流 AI Agent 架构范式**：每种范式同时提供 **原生实现**（零框架、懂原理）和 **LangChain 实现**（生产级、可落地）两套等价代码，配套可直接运行的 Demo 与详尽中文注释。
+> **一站式学习 10 种主流 AI Agent 架构范式**：每种范式同时提供 **原生实现**（零框架、懂原理）、**LangChain 实现**（生产级、可落地）与 **LangGraph 实现**（图编排、显式建模循环/并发/路由）三套等价代码，配套可直接运行的 Demo 与详尽中文注释。
 
 ***
 
@@ -31,9 +32,9 @@
 
 ### 2. 安装依赖
 
-本仓库支持两种模式的依赖安装，按需要选择：
+本仓库支持三种模式的依赖安装，按需要选择：
 
-#### 方案 A：原生实现（推荐入门，仅需 4 个包）
+#### 方案 A：原生实现（推荐入门，仅需 3 个包）
 
 ```bash
 pip install -r requirements.txt
@@ -50,7 +51,7 @@ pip install -r requirements-langchain.txt
 
 内容：在方案 A 基础上追加 `langchain-core` / `langchain-community` / `langchain-openai` / `langchain-anthropic`。
 
-#### 方案 C：原生 + LangGraph（30 个示例全部能跑）
+#### 方案 C：原生 + LangChain + LangGraph（30 个示例全部能跑）
 
 ```bash
 pip install -r requirements.txt
@@ -180,6 +181,7 @@ Agent-Paradigm-Hub/
 │           ├── langchain/workflow.py
 │           └── langgraph/workflow.py
 │
+├── ai.py                              # 🧪 根目录快速演示：单文件 LangGraph ReAct（工具调用 + 图编排）
 ├── requirements.txt                   # 原生实现依赖
 ├── requirements-langchain.txt         # LangChain 额外依赖
 ├── requirements-langgraph.txt         # LangGraph 额外依赖
@@ -726,7 +728,7 @@ agent = ReflectionAgent(max_iterations=5)
 
 ### Q6：这些示例能直接搬进生产项目吗？
 
-A：**可以作为架构模板，不建议原封不动搬**。生产环境还需要补充：① 日志和可观测性（LangSmith / LangFuse / Phoenix）；② 结构化输出校验（Pydantic / Instructor）；③ 工具调用的重试/超时/限流（Tenacity）；④ 对话历史的存储与检索（Redis / DB + RAG）；⑤ 成本监控与错误告警。本仓库 20 个示例的最大价值是提供**每种范式的最小闭环**，你可以在此基础上按生产需求逐步加固。
+A：**可以作为架构模板，不建议原封不动搬**。生产环境还需要补充：① 日志和可观测性（LangSmith / LangFuse / Phoenix）；② 结构化输出校验（Pydantic / Instructor）；③ 工具调用的重试/超时/限流（Tenacity）；④ 对话历史的存储与检索（Redis / DB + RAG）；⑤ 成本监控与错误告警。本仓库 30 个示例（native / langchain / langgraph 三套等价实现）的最大价值是提供**每种范式的最小闭环**，你可以在此基础上按生产需求逐步加固。
 
 ***
 
