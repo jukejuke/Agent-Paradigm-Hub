@@ -10,11 +10,17 @@ Prompt 工程来实现两阶段规划-执行的效果。
 from typing import Optional
 
 import json
+import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -152,7 +158,12 @@ def run(task: str, model_name: str = "gpt-4o-mini") -> str:
     Returns:
         最终结果
     """
-    llm = ChatOpenAI(model=model_name, temperature=0.7)
+    llm = ChatOpenAI(
+        model=os.getenv("OPENAI_MODEL", model_name),
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL"),
+        temperature=0.7,
+    )
 
     print(f"🎯 任务: {task}")
     plan = plan_task(llm, task)
