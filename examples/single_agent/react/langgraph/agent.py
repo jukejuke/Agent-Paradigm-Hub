@@ -19,7 +19,7 @@ from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
-from langchain_core.messages import BaseMessage, HumanMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -182,7 +182,7 @@ def build_react_graph():
 
 def run(question: str) -> str:
     """
-    运行 ReAct Agent 并返回最终答案
+    运行 ReAct Agent，打印中间思考过程并返回最终答案
 
     Args:
         question: 用户的问题
@@ -191,8 +191,31 @@ def run(question: str) -> str:
         最终答案字符串
     """
     graph = build_react_graph()
-    result = graph.invoke({"messages": [HumanMessage(content=question)]})
-    return result["messages"][-1].content
+    print(f"\n{'=' * 50}")
+    print(f"用户问题: {question}")
+    print(f"{'=' * 50}\n")
+
+    final_answer = ""
+    # 以 updates 模式逐步输出每个节点的状态更新，从而观察 ReAct 的思考过程
+    for chunk in graph.stream(
+        {"messages": [HumanMessage(content=question)]},
+        stream_mode="updates",
+    ):
+        for node_name, update in chunk.items():
+            for msg in update.get("messages", []):
+                # AI 消息：展示模型的思考与工具调用决策
+                if isinstance(msg, AIMessage):
+                    if msg.tool_calls:
+                        for tc in msg.tool_calls:
+                            print(f"Thought: 调用工具 {tc['name']}，参数 {tc['args']}")
+                    elif msg.content:
+                        final_answer = msg.content
+                        print(f"Final Answer: {msg.content}")
+                # 工具消息：展示工具执行结果
+                elif isinstance(msg, ToolMessage):
+                    print(f"Observation ({msg.name}): {msg.content}\n")
+
+    return final_answer
 
 def main():
     """演示 LangGraph ReAct Agent 的使用"""
