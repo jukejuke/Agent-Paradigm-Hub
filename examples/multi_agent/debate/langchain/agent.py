@@ -5,11 +5,17 @@ Agent Debate - LangChain 实现
 使用 LangChain 实现多 Agent 辩论，用 Runnable 链组装辩论流程。
 """
 
+import os
+from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -42,7 +48,12 @@ class LangChainDebateOrchestrator:
     """LangChain 辩论编排者"""
 
     def __init__(self, model_name: str = "gpt-4o-mini"):
-        self.llm = ChatOpenAI(model=model_name, temperature=0.7)
+        self.llm = ChatOpenAI(
+            model=os.getenv("OPENAI_MODEL", model_name),
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+            temperature=0.7,
+        )
         self.debaters = [
             LangChainDebater("正方-小张", "AI Agent 将取代大部分传统工作", self.llm),
             LangChainDebater("反方-小李", "AI Agent 主要是辅助工具", self.llm),

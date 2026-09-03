@@ -5,13 +5,19 @@ Orchestrator-Worker Agent - LangChain 实现
 使用 LangChain 的 Runnable 抽象来实现 Orchestrator-Worker 模式。
 """
 
+import json
+import os
+from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-import json
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -55,7 +61,12 @@ class LangChainOrchestrator:
 
     def __init__(self, model_name: str = "gpt-4o-mini"):
         """初始化 Orchestrator"""
-        self.llm = ChatOpenAI(model=model_name, temperature=0.7)
+        self.llm = ChatOpenAI(
+            model=os.getenv("OPENAI_MODEL", model_name),
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+            temperature=0.7,
+        )
         self.workers = {
             "researcher": LangChainWorker("搜索研究员", "负责搜索和收集信息", self.llm),
             "analyst": LangChainWorker("数据分析师", "负责分析数据", self.llm),

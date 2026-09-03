@@ -5,12 +5,18 @@ Prompt Chaining Workflow - LangChain 实现
 使用 LangChain RunnableSequence 实现链式调用。
 """
 
+import os
+from pathlib import Path
 from typing import Optional, Any
 
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -21,7 +27,12 @@ class LangChainPromptChaining:
     """LangChain 链式提示"""
 
     def __init__(self, model_name: str = "gpt-4o-mini"):
-        self.llm = ChatOpenAI(model=model_name, temperature=0.7)
+        self.llm = ChatOpenAI(
+            model=os.getenv("OPENAI_MODEL", model_name),
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+            temperature=0.7,
+        )
 
     def run(self, initial_input: str, steps: list[dict]) -> str:
         """

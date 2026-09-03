@@ -13,6 +13,12 @@ Multi-Brain 是协作式（各方从不同角度思考，然后互补）。
 
 from typing import Optional
 
+import os
+import sys
+
+# 将项目根目录加入 sys.path，使本脚本可在任意工作目录运行
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")))
+
 from utils.llm_client import LLMClient
 
 

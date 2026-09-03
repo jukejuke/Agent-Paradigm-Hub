@@ -5,11 +5,17 @@ Multi-Brain Agent - LangChain 实现
 使用 LangChain 实现多视角思考和汇总。
 """
 
+import os
+from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -40,7 +46,12 @@ class LangChainMultiBrain:
     """LangChain Multi-Brain 聚合器"""
 
     def __init__(self, model_name: str = "gpt-4o-mini"):
-        self.llm = ChatOpenAI(model=model_name, temperature=0.7)
+        self.llm = ChatOpenAI(
+            model=os.getenv("OPENAI_MODEL", model_name),
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+            temperature=0.7,
+        )
         self.brains = [
             LangChainBrain("技术专家", "关注技术可行性、实现路径、性能瓶颈", self.llm),
             LangChainBrain("产品经理", "关注用户需求、市场价值、竞争态势", self.llm),

@@ -6,11 +6,17 @@ Reflection Agent - LangChain 实现
 通过 Chain 组合实现: 生成 -> 反思 -> 改进 的循环。
 """
 
+import os
+from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -68,7 +74,12 @@ def run(
     Returns:
         最终答案
     """
-    llm = ChatOpenAI(model=model_name, temperature=0.7)
+    llm = ChatOpenAI(
+        model=os.getenv("OPENAI_MODEL", model_name),
+        api_key=os.getenv("OPENAI_API_KEY"),
+        base_url=os.getenv("OPENAI_BASE_URL"),
+        temperature=0.7,
+    )
     generate_chain, reflect_chain, refine_chain = create_reflection_chains(llm)
 
     print(f"🎯 问题: {question}\n")

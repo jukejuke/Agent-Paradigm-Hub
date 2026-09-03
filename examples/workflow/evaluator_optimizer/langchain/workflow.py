@@ -5,11 +5,17 @@ Evaluator-Optimizer Workflow - LangChain 实现
 使用 LangChain Chain 组合实现 生成→评估→改进 循环。
 """
 
+import os
+from pathlib import Path
 from typing import Optional, Any
 
+from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+
+# 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
 # ==============================================================================
@@ -20,7 +26,12 @@ class LangChainEvaluatorOptimizer:
     """LangChain Evaluator-Optimizer"""
 
     def __init__(self, model_name: str = "gpt-4o-mini", max_iterations: int = 5, pass_score: int = 7):
-        self.llm = ChatOpenAI(model=model_name, temperature=0.7)
+        self.llm = ChatOpenAI(
+            model=os.getenv("OPENAI_MODEL", model_name),
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_BASE_URL"),
+            temperature=0.7,
+        )
         self.max_iterations = max_iterations
         self.pass_score = pass_score
 
