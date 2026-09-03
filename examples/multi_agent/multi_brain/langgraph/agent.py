@@ -74,8 +74,11 @@ def tech_node(state: MultiBrainState) -> dict:
     """
     llm = _get_llm()
     messages = [SystemMessage(content=TECH_PROMPT), HumanMessage(content=state["question"])]
-    response = llm.invoke(messages)
-    return {"persp_tech": response.content}
+    response = llm.stream(messages)
+    content = ""
+    for chunk in response:
+        content += chunk.content
+    return {"persp_tech": content}
 
 
 def product_node(state: MultiBrainState) -> dict:
@@ -89,8 +92,10 @@ def product_node(state: MultiBrainState) -> dict:
     """
     llm = _get_llm()
     messages = [SystemMessage(content=PRODUCT_PROMPT), HumanMessage(content=state["question"])]
-    response = llm.invoke(messages)
-    return {"persp_product": response.content}
+    content = ""
+    for chunk in llm.stream(messages):
+        content += chunk.content
+    return {"persp_product": content}
 
 
 def finance_node(state: MultiBrainState) -> dict:
@@ -104,8 +109,10 @@ def finance_node(state: MultiBrainState) -> dict:
     """
     llm = _get_llm()
     messages = [SystemMessage(content=FINANCE_PROMPT), HumanMessage(content=state["question"])]
-    response = llm.invoke(messages)
-    return {"persp_finance": response.content}
+    content = ""
+    for chunk in llm.stream(messages):
+        content += chunk.content
+    return {"persp_finance": content}
 
 
 def risk_node(state: MultiBrainState) -> dict:
@@ -119,8 +126,10 @@ def risk_node(state: MultiBrainState) -> dict:
     """
     llm = _get_llm()
     messages = [SystemMessage(content=RISK_PROMPT), HumanMessage(content=state["question"])]
-    response = llm.invoke(messages)
-    return {"persp_risk": response.content}
+    content = ""
+    for chunk in llm.stream(messages):
+        content += chunk.content
+    return {"persp_risk": content}
 
 
 def synthesize_node(state: MultiBrainState) -> dict:
@@ -143,8 +152,10 @@ def synthesize_node(state: MultiBrainState) -> dict:
         SystemMessage(content="你是综合分析专家，请整合多个专业角色的观点，形成一个全面、平衡的最终决策建议。"),
         HumanMessage(content=f"问题: {state['question']}\n\n各角色观点:\n{perspectives_text}\n\n请综合给出最终决策建议:"),
     ]
-    response = llm.invoke(messages)
-    return {"final": response.content}
+    final = ""
+    for chunk in llm.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 # ==============================================================================
@@ -189,8 +200,21 @@ def run(question: str) -> str:
         综合后的最终决策建议文本
     """
     graph = build_multi_brain_graph()
-    result = graph.invoke({"question": question})
-    return result["final"]
+    print(f"\n{'=' * 50}")
+    print(f"用户问题: {question}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream({"question": question}, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["final"]
 
 
 def main():

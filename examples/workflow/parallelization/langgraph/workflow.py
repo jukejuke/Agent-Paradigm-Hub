@@ -52,8 +52,9 @@ def split_node(state: ParallelizationState) -> dict:
         '例如：["子任务1", "子任务2", "子任务3"]\n\n'
         f"主任务：{task}"
     )
-    response = LLM.invoke([HumanMessage(content=prompt)])
-    raw = str(response.content)
+    raw = ""
+    for chunk in LLM.stream([HumanMessage(content=prompt)]):
+        raw += chunk.content
     try:
         start = raw.find("[")
         end = raw.rfind("]") + 1
@@ -87,9 +88,11 @@ def worker_1_node(state: ParallelizationState) -> dict:
         SystemMessage(content="你是高效的处理者，只完成分配给你的子任务。"),
         HumanMessage(content=state["subtasks"][0]),
     ]
-    response = LLM.invoke(messages)
+    result = ""
+    for chunk in LLM.stream(messages):
+        result += chunk.content
     print("✅ [子任务 1] 完成")
-    return {"result_1": str(response.content)}
+    return {"result_1": result}
 
 
 def worker_2_node(state: ParallelizationState) -> dict:
@@ -105,9 +108,11 @@ def worker_2_node(state: ParallelizationState) -> dict:
         SystemMessage(content="你是高效的处理者，只完成分配给你的子任务。"),
         HumanMessage(content=state["subtasks"][1]),
     ]
-    response = LLM.invoke(messages)
+    result = ""
+    for chunk in LLM.stream(messages):
+        result += chunk.content
     print("✅ [子任务 2] 完成")
-    return {"result_2": str(response.content)}
+    return {"result_2": result}
 
 
 def worker_3_node(state: ParallelizationState) -> dict:
@@ -123,9 +128,11 @@ def worker_3_node(state: ParallelizationState) -> dict:
         SystemMessage(content="你是高效的处理者，只完成分配给你的子任务。"),
         HumanMessage(content=state["subtasks"][2]),
     ]
-    response = LLM.invoke(messages)
+    result = ""
+    for chunk in LLM.stream(messages):
+        result += chunk.content
     print("✅ [子任务 3] 完成")
-    return {"result_3": str(response.content)}
+    return {"result_3": result}
 
 
 def synthesize_node(state: ParallelizationState) -> dict:
@@ -148,8 +155,10 @@ def synthesize_node(state: ParallelizationState) -> dict:
             content=f"主任务：{state['task']}\n\n各子任务结果：\n{combined}\n\n请输出最终汇总答案。"
         ),
     ]
-    response = LLM.invoke(messages)
-    return {"final": str(response.content)}
+    final = ""
+    for chunk in LLM.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 def build_parallelization_graph():
@@ -188,8 +197,21 @@ def run(task: str) -> str:
         最终汇总答案文本。
     """
     graph = build_parallelization_graph()
-    result = graph.invoke({"task": task})
-    return result["final"]
+    print(f"\n{'=' * 50}")
+    print(f"主任务: {task}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream({"task": task}, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["final"]
 
 
 def main():

@@ -90,8 +90,9 @@ def orchestrator_node(state: OrchestratorWorkerState) -> dict:
         ),
         HumanMessage(content=f"请拆解以下任务:\n{state['task']}"),
     ]
-    response = llm.invoke(messages)
-    content = response.content
+    content = ""
+    for chunk in llm.stream(messages):
+        content += chunk.content
 
     try:
         start = content.find("[")
@@ -126,8 +127,10 @@ def researcher_node(state: OrchestratorWorkerState) -> dict:
             content=f"任务: {state['task']}\n\n拆解出的子任务:\n{steps}\n\n请给出信息收集结果:"
         ),
     ]
-    response = llm.invoke(messages)
-    return {"researcher_result": response.content}
+    result = ""
+    for chunk in llm.stream(messages):
+        result += chunk.content
+    return {"researcher_result": result}
 
 
 def analyst_node(state: OrchestratorWorkerState) -> dict:
@@ -148,8 +151,10 @@ def analyst_node(state: OrchestratorWorkerState) -> dict:
             content=f"任务: {state['task']}\n\n拆解出的子任务:\n{steps}\n\n请给出分析结果:"
         ),
     ]
-    response = llm.invoke(messages)
-    return {"analyst_result": response.content}
+    result = ""
+    for chunk in llm.stream(messages):
+        result += chunk.content
+    return {"analyst_result": result}
 
 
 def writer_node(state: OrchestratorWorkerState) -> dict:
@@ -170,8 +175,10 @@ def writer_node(state: OrchestratorWorkerState) -> dict:
             content=f"任务: {state['task']}\n\n拆解出的子任务:\n{steps}\n\n请给出撰写内容:"
         ),
     ]
-    response = llm.invoke(messages)
-    return {"writer_result": response.content}
+    result = ""
+    for chunk in llm.stream(messages):
+        result += chunk.content
+    return {"writer_result": result}
 
 
 def aggregator_node(state: OrchestratorWorkerState) -> dict:
@@ -200,8 +207,10 @@ def aggregator_node(state: OrchestratorWorkerState) -> dict:
             )
         ),
     ]
-    response = llm.invoke(messages)
-    return {"final": response.content}
+    final = ""
+    for chunk in llm.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 # ==============================================================================
@@ -246,8 +255,21 @@ def run(task: str) -> str:
         最终报告文本
     """
     graph = build_orchestrator_worker_graph()
-    result = graph.invoke({"task": task})
-    return result["final"]
+    print(f"\n{'=' * 50}")
+    print(f"任务: {task}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream({"task": task}, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["final"]
 
 
 def main():

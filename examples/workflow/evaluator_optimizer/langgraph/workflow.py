@@ -69,7 +69,9 @@ def generate_node(state: EvaluatorOptimizerState) -> dict:
         SystemMessage(content=_GENERATE_SYSTEM),
         HumanMessage(content=state["requirements"]),
     ]
-    draft = _LLM.invoke(messages).content
+    draft = ""
+    for chunk in _LLM.stream(messages):
+        draft += chunk.content
     return {"current": draft, "iteration": 1}
 
 
@@ -87,7 +89,9 @@ def evaluate_node(state: EvaluatorOptimizerState) -> dict:
         SystemMessage(content=_EVALUATE_SYSTEM),
         HumanMessage(content=f"需求: {state['requirements']}\n\n当前内容:\n{state['current']}\n\n请评估。"),
     ]
-    feedback = _LLM.invoke(messages).content
+    feedback = ""
+    for chunk in _LLM.stream(messages):
+        feedback += chunk.content
     return {"feedback": feedback}
 
 
@@ -111,7 +115,9 @@ def optimize_node(state: EvaluatorOptimizerState) -> dict:
             )
         ),
     ]
-    improved = _LLM.invoke(messages).content
+    improved = ""
+    for chunk in _LLM.stream(messages):
+        improved += chunk.content
     return {"current": improved, "iteration": state["iteration"] + 1}
 
 
@@ -164,8 +170,24 @@ def run(requirements: str) -> str:
         经过评估与优化后的最终内容
     """
     graph = build_evaluator_optimizer_graph()
-    result = graph.invoke({"requirements": requirements, "pass_score": 7})
-    return result["current"]
+    print(f"\n{'=' * 50}")
+    print(f"需求: {requirements}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream(
+        {"requirements": requirements, "pass_score": 7},
+        stream_mode=["updates", "values"],
+    ):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["current"]
 
 
 def main():

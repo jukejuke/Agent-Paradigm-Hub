@@ -72,8 +72,9 @@ def pro_node(state: DebateState) -> dict:
             content=f"辩论主题: {state['topic']}\n\n前序辩论:\n{state['history']}\n\n请正方发言:"
         ),
     ]
-    response = llm.invoke(messages)
-    content = response.content
+    content = ""
+    for chunk in llm.stream(messages):
+        content += chunk.content
     return {
         "history": state["history"] + "\n正方: " + content,
         "round": state["round"] + 1,
@@ -102,8 +103,9 @@ def con_node(state: DebateState) -> dict:
             content=f"辩论主题: {state['topic']}\n\n前序辩论:\n{state['history']}\n\n请反方发言:"
         ),
     ]
-    response = llm.invoke(messages)
-    content = response.content
+    content = ""
+    for chunk in llm.stream(messages):
+        content += chunk.content
     return {
         "history": state["history"] + "\n反方: " + content,
     }
@@ -146,8 +148,10 @@ def judge_node(state: DebateState) -> dict:
             content=f"辩论主题: {state['topic']}\n\n完整辩论记录:\n{state['history']}\n\n请给出裁决:"
         ),
     ]
-    response = llm.invoke(messages)
-    return {"verdict": response.content}
+    verdict = ""
+    for chunk in llm.stream(messages):
+        verdict += chunk.content
+    return {"verdict": verdict}
 
 
 # ==============================================================================
@@ -186,8 +190,24 @@ def run(topic: str) -> str:
         裁判裁决文本
     """
     graph = build_debate_graph()
-    result = graph.invoke({"topic": topic, "round": 0, "history": ""})
-    return result["verdict"]
+    print(f"\n{'=' * 50}")
+    print(f"辩论主题: {topic}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream(
+        {"topic": topic, "round": 0, "history": ""},
+        stream_mode=["updates", "values"],
+    ):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["verdict"]
 
 
 def main():

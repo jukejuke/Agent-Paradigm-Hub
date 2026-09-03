@@ -66,16 +66,18 @@ def router_node(state: RoutingState) -> dict:
         SystemMessage(content=_ROUTING_SYSTEM),
         HumanMessage(content=state["request"]),
     ]
-    response = _LLM.invoke(messages).content
+    content = ""
+    for chunk in _LLM.stream(messages):
+        content += chunk.content
 
     route_key = "general_qa"
     try:
         # 截取首个 { 到最后一个 } 之间的 JSON 片段并解析
-        start = response.find("{")
-        end = response.rfind("}") + 1
-        route_key = json.loads(response[start:end]).get("route", "general_qa")
+        start = content.find("{")
+        end = content.rfind("}") + 1
+        route_key = json.loads(content[start:end]).get("route", "general_qa")
     except (json.JSONDecodeError, ValueError):
-        print(f"Warning: 路由解析失败，默认走 general_qa。原始回复: {response}")
+        print(f"Warning: 路由解析失败，默认走 general_qa。原始回复: {content}")
 
     # 兜底：非法 key 统一回退
     if route_key not in _HANDLER_PROMPTS:
@@ -93,25 +95,37 @@ def route_decision(state: RoutingState) -> str:
 def general_qa_node(state: RoutingState) -> dict:
     """通用问答处理器（博学助手）。Args: state 当前图状态。Returns: {"final": 处理结果}。"""
     messages = [SystemMessage(content=_HANDLER_PROMPTS["general_qa"]), HumanMessage(content=state["request"])]
-    return {"final": str(_LLM.invoke(messages).content)}
+    final = ""
+    for chunk in _LLM.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 def code_helper_node(state: RoutingState) -> dict:
     """编程助手处理器（资深工程师）。Args: state 当前图状态。Returns: {"final": 处理结果}。"""
     messages = [SystemMessage(content=_HANDLER_PROMPTS["code_helper"]), HumanMessage(content=state["request"])]
-    return {"final": str(_LLM.invoke(messages).content)}
+    final = ""
+    for chunk in _LLM.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 def creative_writing_node(state: RoutingState) -> dict:
     """创意写作处理器（创意写作专家）。Args: state 当前图状态。Returns: {"final": 处理结果}。"""
     messages = [SystemMessage(content=_HANDLER_PROMPTS["creative_writing"]), HumanMessage(content=state["request"])]
-    return {"final": str(_LLM.invoke(messages).content)}
+    final = ""
+    for chunk in _LLM.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 def data_analysis_node(state: RoutingState) -> dict:
     """数据分析处理器（数据分析师）。Args: state 当前图状态。Returns: {"final": 处理结果}。"""
     messages = [SystemMessage(content=_HANDLER_PROMPTS["data_analysis"]), HumanMessage(content=state["request"])]
-    return {"final": str(_LLM.invoke(messages).content)}
+    final = ""
+    for chunk in _LLM.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 # ==============================================================================
@@ -148,8 +162,23 @@ def build_routing_graph():
 
 
 def run(request: str) -> str:
-    """运行完整的 Routing 工作流。Args: request 用户请求。Returns: 最终回复。"""
-    return build_routing_graph().invoke({"request": request})["final"]
+    """运行完整的 Routing 工作流，流式打印底层 LLM 输出。Args: request 用户请求。Returns: 最终回复。"""
+    graph = build_routing_graph()
+    print(f"\n{'=' * 50}")
+    print(f"请求: {request}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream({"request": request}, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["final"]
 
 
 def main():
@@ -162,10 +191,9 @@ def main():
 
     for req in test_requests:
         print(f"\n{'#' * 50}")
-        print(f"📥 请求: {req}")
-        result = build_routing_graph().invoke({"request": req})
-        print(f"🔀 路由 → {result['route']}")
-        print(f"📤 最终回复:\n{result['final']}")
+        print(f"请求: {req}")
+        result = run(req)
+        print(f"最终回复:\n{result}")
 
 
 if __name__ == "__main__":

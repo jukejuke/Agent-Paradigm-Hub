@@ -64,8 +64,9 @@ def planner_node(state: PlanExecuteState) -> dict:
         f"用户问题：{question}"
     )
 
-    response = LLM.invoke([HumanMessage(content=prompt)])
-    raw = str(response.content)
+    raw = ""
+    for chunk in LLM.stream([HumanMessage(content=prompt)]):
+        raw += chunk.content
 
     # 解析 JSON 步骤列表，失败时回退到默认三步
     try:
@@ -106,8 +107,10 @@ def executor_node(state: PlanExecuteState) -> dict:
             SystemMessage(content="你是执行者，只完成当前这一步任务。"),
             HumanMessage(content=f"原始问题：{question}\n当前步骤：{step}"),
         ]
-        response = LLM.invoke(messages)
-        results.append(str(response.content))
+        step_result = ""
+        for chunk in LLM.stream(messages):
+            step_result += chunk.content
+        results.append(step_result)
         print(f"--- 执行步骤完成: {step}")
 
     return {"results": results}
@@ -138,8 +141,10 @@ def summarizer_node(state: PlanExecuteState) -> dict:
             )
         ),
     ]
-    response = LLM.invoke(messages)
-    return {"final": str(response.content)}
+    final = ""
+    for chunk in LLM.stream(messages):
+        final += chunk.content
+    return {"final": final}
 
 
 # ==============================================================================
@@ -178,8 +183,21 @@ def run(question: str) -> str:
         最终答案文本。
     """
     graph = build_plan_execute_graph()
-    result = graph.invoke({"question": question})
-    return result["final"]
+    print(f"\n{'=' * 50}")
+    print(f"用户问题: {question}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream({"question": question}, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["final"]
 
 
 def main():

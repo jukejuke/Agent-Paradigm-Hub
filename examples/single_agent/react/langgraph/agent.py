@@ -202,6 +202,8 @@ def run(question: str) -> str:
         stream_mode="updates",
     ):
         for node_name, update in chunk.items():
+            print(f"Node: {node_name}")
+            # print(f"\n[{node_name}] {update}")
             for msg in update.get("messages", []):
                 # AI 消息：展示模型的思考与工具调用决策
                 if isinstance(msg, AIMessage):

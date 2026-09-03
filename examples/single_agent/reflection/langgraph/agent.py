@@ -80,7 +80,9 @@ def generate_node(state: ReflectionState) -> dict:
         SystemMessage(content=_GENERATE_SYSTEM),
         HumanMessage(content=state["question"]),
     ]
-    draft = _LLM.invoke(messages).content
+    draft = ""
+    for chunk in _LLM.stream(messages):
+        draft += chunk.content
     return {"draft": draft, "iteration": 1}
 
 
@@ -98,7 +100,9 @@ def reflect_node(state: ReflectionState) -> dict:
         SystemMessage(content=_REFLECT_SYSTEM),
         HumanMessage(content=f"问题: {state['question']}\n\n回答:\n{state['draft']}\n\n请批评。"),
     ]
-    critique = _LLM.invoke(messages).content
+    critique = ""
+    for chunk in _LLM.stream(messages):
+        critique += chunk.content
     return {"critique": critique}
 
 
@@ -122,7 +126,9 @@ def refine_node(state: ReflectionState) -> dict:
             )
         ),
     ]
-    refined = _LLM.invoke(messages).content
+    refined = ""
+    for chunk in _LLM.stream(messages):
+        refined += chunk.content
     return {"draft": refined, "iteration": state["iteration"] + 1}
 
 
@@ -203,8 +209,21 @@ def run(question: str) -> str:
         经过反思改进后的最终答案
     """
     graph = build_reflection_graph()
-    result = graph.invoke({"question": question})
-    return result["draft"]
+    print(f"\n{'=' * 50}")
+    print(f"用户问题: {question}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream({"question": question}, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["draft"]
 
 
 def main():

@@ -52,8 +52,10 @@ def outline_node(state: PromptChainingState) -> dict:
         ),
         HumanMessage(content=f"主题：{state['input']}\n\n请生成内容大纲。"),
     ]
-    response = LLM.invoke(messages)
-    return {"outline": str(response.content)}
+    outline = ""
+    for chunk in LLM.stream(messages):
+        outline += chunk.content
+    return {"outline": outline}
 
 
 def article_node(state: PromptChainingState) -> dict:
@@ -73,8 +75,10 @@ def article_node(state: PromptChainingState) -> dict:
         ),
         HumanMessage(content=f"大纲：\n{state['outline']}\n\n请撰写完整文章。"),
     ]
-    response = LLM.invoke(messages)
-    return {"article": str(response.content)}
+    article = ""
+    for chunk in LLM.stream(messages):
+        article += chunk.content
+    return {"article": article}
 
 
 def tweet_node(state: PromptChainingState) -> dict:
@@ -94,8 +98,10 @@ def tweet_node(state: PromptChainingState) -> dict:
         ),
         HumanMessage(content=f"文章：\n{state['article']}\n\n请提炼成推文。"),
     ]
-    response = LLM.invoke(messages)
-    return {"tweet": str(response.content)}
+    tweet = ""
+    for chunk in LLM.stream(messages):
+        tweet += chunk.content
+    return {"tweet": tweet}
 
 
 def build_prompt_chaining_graph():
@@ -130,8 +136,21 @@ def run(initial_input: str) -> str:
         最终提炼出的推文文本
     """
     graph = build_prompt_chaining_graph()
-    result = graph.invoke({"input": initial_input})
-    return result["tweet"]
+    print(f"\n{'=' * 50}")
+    print(f"主题: {initial_input}")
+    print(f"{'=' * 50}\n")
+
+    final_state = None
+    # updates 模式打印每个节点的状态更新，values 模式用于取最终状态
+    for mode, payload in graph.stream({"input": initial_input}, stream_mode=["updates", "values"]):
+        if mode == "updates":
+            for node_name, update in payload.items():
+                print(f"\n[{node_name}] {update}")
+        else:  # mode == "values"
+            final_state = payload
+
+    print("\n")
+    return final_state["tweet"]
 
 
 def main():
