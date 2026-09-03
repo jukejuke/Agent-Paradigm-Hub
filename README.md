@@ -14,7 +14,7 @@
 | 亮点                      | 说明                                                                                                       |
 | ----------------------- | -------------------------------------------------------------------------------------------------------- |
 | 🎓 **10 种主流范式，全覆盖**     | 从经典的 ReAct / Plan-and-Execute，到前沿的 Reflection / Evaluator-Optimizer，3 大分类（单智能体 / 多智能体 / 工作流）共 10 种范式一次学透 |
-| ⚖️ **原生 vs 框架，双实现对照**   | 每个示例既有用原生 LLM API 手写的「从零实现版」（便于理解内部循环、Prompt 工程），也有基于 LangChain 的「生产版」（展示 Runnable、AgentExecutor 等最佳实践）  |
+| ⚖️ **原生 vs 框架，三实现对照**   | 每个示例既有原生 LLM API 手写的「从零实现版」（懂原理）、LangChain 的「生产版」（Runnable、AgentExecutor），也有 LangGraph 的「图编排版」（StateGraph 显式建模循环 / 并发 / 路由） |
 | 🚀 **开箱即用，零门槛体验**       | 只需填入 API Key，`python -m examples.xxx` 即可运行完整 Demo；每个示例自带 `main()` 函数与演示问题，无需自己拼凑                         |
 | 🧱 **模块化结构，易扩展**        | 统一的 `utils.llm_client.LLMClient` 屏蔽不同 LLM 厂商差异，新增 Provider、新增工具、新增范式都有清晰的扩展套路                            |
 | 📝 **中文注释 + 中文 Prompt** | 所有代码头注释、函数级注释、系统 Prompt 全部为中文，便于国内开发者快速理解 Agent 内部工作机制                                                   |
@@ -41,7 +41,7 @@ pip install -r requirements.txt
 
 内容：`openai` + `anthropic` + `python-dotenv`
 
-#### 方案 B：原生 + LangChain（全部 20 个示例都能跑）
+#### 方案 B：原生 + LangChain（native + langchain 共 20 个示例）
 
 ```bash
 pip install -r requirements.txt
@@ -49,6 +49,15 @@ pip install -r requirements-langchain.txt
 ```
 
 内容：在方案 A 基础上追加 `langchain-core` / `langchain-community` / `langchain-openai` / `langchain-anthropic`。
+
+#### 方案 C：原生 + LangGraph（30 个示例全部能跑）
+
+```bash
+pip install -r requirements.txt
+pip install -r requirements-langgraph.txt
+```
+
+内容：在方案 A 基础上追加 `langgraph` / `langchain-openai`，用于运行每个范式的 `langgraph/` 实现。
 
 ### 3. 配置环境变量
 
@@ -128,41 +137,52 @@ Agent-Paradigm-Hub/
 │   ├── single_agent/                 # 【一】单智能体范式（3 种）
 │   │   ├── react/                      # ① ReAct：Reason + Act 交替循环
 │   │   │   ├── native/agent.py           #   原生实现
-│   │   │   └── langchain/agent.py        #   LangChain 实现
+│   │   │   ├── langchain/agent.py        #   LangChain 实现
+│   │   │   └── langgraph/agent.py        #   LangGraph 实现
 │   │   ├── plan_execute/               # ② Plan-and-Execute：先规划后执行
 │   │   │   ├── native/agent.py
-│   │   │   └── langchain/agent.py
+│   │   │   ├── langchain/agent.py
+│   │   │   └── langgraph/agent.py
 │   │   └── reflection/                 # ③ Reflection：自我反思改进
 │   │       ├── native/agent.py
-│   │       └── langchain/agent.py
+│   │       ├── langchain/agent.py
+│   │       └── langgraph/agent.py
 │   │
 │   ├── multi_agent/                  # 【二】多智能体协作范式（3 种）
 │   │   ├── debate/                     # ④ Debate：对抗式辩论 + 裁判
 │   │   │   ├── native/agent.py
-│   │   │   └── langchain/agent.py
+│   │   │   ├── langchain/agent.py
+│   │   │   └── langgraph/agent.py
 │   │   ├── multi_brain/                # ⑤ Multi-Brain：多视角协作 + 汇总
 │   │   │   ├── native/agent.py
-│   │   │   └── langchain/agent.py
+│   │   │   ├── langchain/agent.py
+│   │   │   └── langgraph/agent.py
 │   │   └── orchestrator_worker/        # ⑥ Orchestrator-Worker：编排者 + 执行者
 │   │       ├── native/agent.py
-│   │       └── langchain/agent.py
+│   │       ├── langchain/agent.py
+│   │       └── langgraph/agent.py
 │   │
 │   └── workflow/                     # 【三】工作流模式（4 种）
 │       ├── prompt_chaining/            # ⑦ Prompt Chaining：多步骤顺序链式
 │       │   ├── native/workflow.py
-│       │   └── langchain/workflow.py
+│       │   ├── langchain/workflow.py
+│       │   └── langgraph/workflow.py
 │       ├── routing/                    # ⑧ Routing：意图识别路由分发
 │       │   ├── native/workflow.py
-│       │   └── langchain/workflow.py
+│       │   ├── langchain/workflow.py
+│       │   └── langgraph/workflow.py
 │       ├── parallelization/            # ⑨ Parallelization：无依赖任务并发
 │       │   ├── native/workflow.py
-│       │   └── langchain/workflow.py
+│       │   ├── langchain/workflow.py
+│       │   └── langgraph/workflow.py
 │       └── evaluator_optimizer/        # ⑩ Evaluator-Optimizer：生成-评估-改进循环
 │           ├── native/workflow.py
-│           └── langchain/workflow.py
+│           ├── langchain/workflow.py
+│           └── langgraph/workflow.py
 │
 ├── requirements.txt                   # 原生实现依赖
 ├── requirements-langchain.txt         # LangChain 额外依赖
+├── requirements-langgraph.txt         # LangGraph 额外依赖
 ├── .env.example                       # 环境变量模板
 ├── .gitignore
 └── README.md                          # 👈 你正在阅读的文档
@@ -199,11 +219,14 @@ Agent-Paradigm-Hub/
 
 - LangChain 实现：[examples/single\_agent/react/langchain/agent.py](examples/single_agent/react/langchain/agent.py)
 
+- LangGraph 实现：[examples/single\_agent/react/langgraph/agent.py](examples/single_agent/react/langgraph/agent.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.single_agent.react.native.agent
 python -m examples.single_agent.react.langchain.agent
+python -m examples.single_agent.react.langgraph.agent
 ```
 
 ***
@@ -234,11 +257,14 @@ python -m examples.single_agent.react.langchain.agent
 
 - LangChain 实现：[examples/single\_agent/plan\_execute/langchain/agent.py](examples/single_agent/plan_execute/langchain/agent.py)
 
+- LangGraph 实现：[examples/single\_agent/plan\_execute/langgraph/agent.py](examples/single_agent/plan_execute/langgraph/agent.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.single_agent.plan_execute.native.agent
 python -m examples.single_agent.plan_execute.langchain.agent
+python -m examples.single_agent.plan_execute.langgraph.agent
 ```
 
 ***
@@ -272,11 +298,14 @@ for i in 1..max_iterations:
 
 - LangChain 实现：[examples/single\_agent/reflection/langchain/agent.py](examples/single_agent/reflection/langchain/agent.py)
 
+- LangGraph 实现：[examples/single\_agent/reflection/langgraph/agent.py](examples/single_agent/reflection/langgraph/agent.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.single_agent.reflection.native.agent
 python -m examples.single_agent.reflection.langchain.agent
+python -m examples.single_agent.reflection.langgraph.agent
 ```
 
 ***
@@ -307,11 +336,14 @@ Judge LLM 读完整 history → 给出中立总结 + 综合判断
 
 - LangChain 实现：[examples/multi\_agent/debate/langchain/agent.py](examples/multi_agent/debate/langchain/agent.py)
 
+- LangGraph 实现：[examples/multi\_agent/debate/langgraph/agent.py](examples/multi_agent/debate/langgraph/agent.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.multi_agent.debate.native.agent
 python -m examples.multi_agent.debate.langchain.agent
+python -m examples.multi_agent.debate.langgraph.agent
 ```
 
 ***
@@ -343,11 +375,14 @@ Synthesizer LLM 整合 p1~p4 → 最终决策建议
 
 - LangChain 实现：[examples/multi\_agent/multi\_brain/langchain/agent.py](examples/multi_agent/multi_brain/langchain/agent.py)
 
+- LangGraph 实现：[examples/multi\_agent/multi\_brain/langgraph/agent.py](examples/multi_agent/multi_brain/langgraph/agent.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.multi_agent.multi_brain.native.agent
 python -m examples.multi_agent.multi_brain.langchain.agent
+python -m examples.multi_agent.multi_brain.langgraph.agent
 ```
 
 ***
@@ -377,11 +412,14 @@ Orchestrator 汇总 context → 最终整合报告
 
 - LangChain 实现：[examples/multi\_agent/orchestrator\_worker/langchain/agent.py](examples/multi_agent/orchestrator_worker/langchain/agent.py)
 
+- LangGraph 实现：[examples/multi\_agent/orchestrator\_worker/langgraph/agent.py](examples/multi_agent/orchestrator_worker/langgraph/agent.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.multi_agent.orchestrator_worker.native.agent
 python -m examples.multi_agent.orchestrator_worker.langchain.agent
+python -m examples.multi_agent.orchestrator_worker.langgraph.agent
 ```
 
 ***
@@ -412,11 +450,14 @@ Step 3（推文提炼）: system_prompt_3 + user_template_3.format(input=out2)  
 
 - LangChain 实现：[examples/workflow/prompt\_chaining/langchain/workflow.py](examples/workflow/prompt_chaining/langchain/workflow.py)
 
+- LangGraph 实现：[examples/workflow/prompt\_chaining/langgraph/workflow.py](examples/workflow/prompt_chaining/langgraph/workflow.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.workflow.prompt_chaining.native.workflow
 python -m examples.workflow.prompt_chaining.langchain.workflow
+python -m examples.workflow.prompt_chaining.langgraph.workflow
 ```
 
 ***
@@ -449,11 +490,14 @@ switch route_key:
 
 - LangChain 实现：[examples/workflow/routing/langchain/workflow.py](examples/workflow/routing/langchain/workflow.py)
 
+- LangGraph 实现：[examples/workflow/routing/langgraph/workflow.py](examples/workflow/routing/langgraph/workflow.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.workflow.routing.native.workflow
 python -m examples.workflow.routing.langchain.workflow
+python -m examples.workflow.routing.langgraph.workflow
 ```
 
 ***
@@ -485,11 +529,14 @@ Synthesizer LLM 整合 results_map → 最终主任务答案
 
 - LangChain 实现：[examples/workflow/parallelization/langchain/workflow.py](examples/workflow/parallelization/langchain/workflow.py)
 
+- LangGraph 实现：[examples/workflow/parallelization/langgraph/workflow.py](examples/workflow/parallelization/langgraph/workflow.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.workflow.parallelization.native.workflow
 python -m examples.workflow.parallelization.langchain.workflow
+python -m examples.workflow.parallelization.langgraph.workflow
 ```
 
 ***
@@ -526,11 +573,14 @@ for i in 1..max_iterations:
 
 - LangChain 实现：[examples/workflow/evaluator\_optimizer/langchain/workflow.py](examples/workflow/evaluator_optimizer/langchain/workflow.py)
 
+- LangGraph 实现：[examples/workflow/evaluator\_optimizer/langgraph/workflow.py](examples/workflow/evaluator_optimizer/langgraph/workflow.py)
+
 **运行命令**：
 
 ```bash
 python -m examples.workflow.evaluator_optimizer.native.workflow
 python -m examples.workflow.evaluator_optimizer.langchain.workflow
+python -m examples.workflow.evaluator_optimizer.langgraph.workflow
 ```
 
 ***
@@ -653,7 +703,7 @@ OPENAI_MODEL=qwen2.5:7b
 
 ### Q3：原生实现和 LangChain 实现应该学哪个？
 
-A：建议顺序：**先读原生实现（100 行内看懂循环逻辑）→ 再对照 LangChain 实现理解框架封装了什么 → 生产项目选 LangChain 版，学习/研究选原生版**。两套实现输入输出等价，可以互相当「金标准参考答案」。
+A：建议顺序：**先读原生实现（100 行内看懂循环逻辑）→ 再对照 LangChain 实现理解框架封装了什么 → 再读 LangGraph 实现看懂图编排如何显式建模循环/并发/路由**。生产项目可选 LangChain 或 LangGraph 版，学习/研究选原生版。三套实现输入输出等价，可以互相当「金标准参考答案」。
 
 ### Q4：如何调整模型温度 / 最大输出 token 数？
 
