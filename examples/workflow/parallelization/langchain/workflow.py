@@ -6,6 +6,7 @@ Parallelization Workflow - LangChain 实现
 """
 
 import os
+from operator import itemgetter
 from pathlib import Path
 from typing import Optional
 
@@ -55,8 +56,10 @@ class LangChainParallelization:
         chain = prompt | self.llm | StrOutputParser()
 
         # 使用 RunnableParallel 并发执行
+        # 每个分支先用 itemgetter 从完整输入中取出对应的 {subtask: ...}，
+        # 再传给 prompt 链，避免 prompt 收到整个输入字典而缺字段
         runnable_map = RunnableParallel({
-            f"task_{i}": chain for i in range(len(subtasks))
+            f"task_{i}": itemgetter(f"task_{i}") | chain for i in range(len(subtasks))
         })
 
         print("\n⚡ 并行执行中...")
