@@ -148,14 +148,55 @@ def build_evaluator_optimizer_graph():
     Returns:
         编译后的 LangGraph 图
     """
+    # ============ 一、创建状态图 ============
+    # StateGraph 是 LangGraph 的核心：一个"状态机 + 节点 + 连线"的容器。
+    # 泛型参数 EvaluatorOptimizerState（就是上面定义的 TypedDict）规定了整张图
+    # 中所有节点共享的"状态"数据结构，每个节点读写的就是这个 dict。
     graph = StateGraph(EvaluatorOptimizerState)
-    graph.add_node("generate", generate_node)
-    graph.add_node("evaluate", evaluate_node)
-    graph.add_node("optimize", optimize_node)
-    graph.set_entry_point("generate")
-    graph.add_edge("generate", "evaluate")
-    graph.add_conditional_edges("evaluate", should_continue, {"optimize": "optimize", END: END})
-    graph.add_edge("optimize", "evaluate")
+
+    # ============ 二、注册节点（Node） ============
+    # add_node(名字, 函数)：把一个普通 Python 函数挂到图上。
+    # 函数的入参是当前状态 dict，返回值是"要更新到状态里的那部分字段"。
+    # 名字是字符串，可以随便起，但最好与函数功能对应，方便理解和调试。
+    # 注意：这里只是"登记"节点，此刻还不会执行任何代码。
+    graph.add_node("generate", generate_node)   # 生成节点：LLM 根据需求写初稿
+    graph.add_node("evaluate", evaluate_node)   # 评估节点：LLM 给初稿打分并给反馈
+    graph.add_node("optimize", optimize_node)   # 优化节点：LLM 根据反馈改进内容
+
+    # ============ 三、指定入口节点 ============
+    # set_entry_point(名字)：告诉 LangGraph 从哪个节点开始执行。
+    # 一张图必须有且仅有一个入口，就像程序要有 main 函数一样。
+    graph.set_entry_point("generate")           # 整个流程从 generate 开始
+
+    # ============ 四、连普通边（Edge） ============
+    # add_edge(起点, 终点)：表示"起点执行完，无条件、自动走到终点"。
+    # 这样连接后，generate 跑完必定进入 evaluate，形成固定顺序。
+    graph.add_edge("generate", "evaluate")      # 生成完初稿 -> 立刻去评估
+
+    # ============ 五、连条件边（Conditional Edge） ============
+    # add_conditional_edges(起点, 判断函数, 映射字典)：
+    #   1) 起点节点执行完后，会自动调用判断函数 should_continue(state)；
+    #   2) 该函数返回一个"字符串关键字"（比如 "optimize" 或 END）；
+    #   3) 映射字典用这个关键字去查表，得到真正要去往的下一个节点名。
+    # 字典 {关键字: 目标节点} 的含义：
+    #   - 返回 "optimize" -> 去 "optimize" 节点（继续改进）
+    #   - 返回 END（langgraph 内置常量，代表"流程结束"）-> 终止整张图
+    # 这样 evaluate 之后是"继续优化"还是"结束"，由运行时动态决定，
+    # 从而形成循环：evaluate -> (合格?) -> optimize -> evaluate -> ...
+    graph.add_conditional_edges(
+        "evaluate",                                 # 判断的起点节点
+        should_continue,                            # 判断函数，读 state 里的反馈
+        {"optimize": "optimize", END: END},         # 关键字 -> 目标节点的映射表
+    )
+
+    # ============ 六、闭合循环 ============
+    # 上一步的条件边只处理了 evaluate 的去向，还要把 optimize 接回 evaluate，
+    # 这样优化完之后会重新回到评估节点，形成"评估-优化"的循环回路。
+    graph.add_edge("optimize", "evaluate")      # 改进完内容 -> 回到评估再打分
+
+    # ============ 七、编译生成可运行图 ============
+    # compile() 会对整张图做校验（比如入口是否设置、节点是否都存在、有没有死路），
+    # 校验通过后返回一个"编译好的图对象"。之后调用 graph.stream(...) 才能真正运行。
     return graph.compile()
 
 
