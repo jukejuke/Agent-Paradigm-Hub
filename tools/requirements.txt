@@ -1,0 +1,4 @@
+# 编程提示词优化工具（Reflection - LangGraph 实现）依赖
+langgraph>=0.2.0
+langchain-openai>=0.1.0
+python-dotenv>=1.0.0
