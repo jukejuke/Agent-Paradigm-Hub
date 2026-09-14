@@ -17,6 +17,7 @@ template
 AGENTS.md
 .env
 __pycache__/
+output/
 
 ### IntelliJ IDEA ###
 .idea

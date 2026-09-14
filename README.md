@@ -12,13 +12,13 @@
 
 ## ✨ 项目亮点
 
-| 亮点                      | 说明                                                                                                       |
-| ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| 🎓 **10 种主流范式，全覆盖**     | 从经典的 ReAct / Plan-and-Execute，到前沿的 Reflection / Evaluator-Optimizer，3 大分类（单智能体 / 多智能体 / 工作流）共 10 种范式一次学透 |
+| 亮点                      | 说明                                                                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 🎓 **10 种主流范式，全覆盖**     | 从经典的 ReAct / Plan-and-Execute，到前沿的 Reflection / Evaluator-Optimizer，3 大分类（单智能体 / 多智能体 / 工作流）共 10 种范式一次学透                    |
 | ⚖️ **原生 vs 框架，三实现对照**   | 每个示例既有原生 LLM API 手写的「从零实现版」（懂原理）、LangChain 的「生产版」（Runnable、AgentExecutor），也有 LangGraph 的「图编排版」（StateGraph 显式建模循环 / 并发 / 路由） |
-| 🚀 **开箱即用，零门槛体验**       | 只需填入 API Key，`python -m examples.xxx` 即可运行完整 Demo；每个示例自带 `main()` 函数与演示问题，无需自己拼凑                         |
-| 🧱 **模块化结构，易扩展**        | 统一的 `utils.llm_client.LLMClient` 屏蔽不同 LLM 厂商差异，新增 Provider、新增工具、新增范式都有清晰的扩展套路                            |
-| 📝 **中文注释 + 中文 Prompt** | 所有代码头注释、函数级注释、系统 Prompt 全部为中文，便于国内开发者快速理解 Agent 内部工作机制                                                   |
+| 🚀 **开箱即用，零门槛体验**       | 只需填入 API Key，`python -m examples.xxx` 即可运行完整 Demo；每个示例自带 `main()` 函数与演示问题，无需自己拼凑                                            |
+| 🧱 **模块化结构，易扩展**        | 统一的 `utils.llm_client.LLMClient` 屏蔽不同 LLM 厂商差异，新增 Provider、新增工具、新增范式都有清晰的扩展套路                                               |
+| 📝 **中文注释 + 中文 Prompt** | 所有代码头注释、函数级注释、系统 Prompt 全部为中文，便于国内开发者快速理解 Agent 内部工作机制                                                                      |
 
 ***
 
@@ -27,7 +27,6 @@
 ### 1. 环境要求
 
 - Python **3.10 及以上**（使用了类型注解 `list[dict]` / `tuple[str, str]` 等 3.9+ 语法，以及部分 3.10 风格）
-
 - 一个有效的 **OpenAI API Key**（默认使用 `gpt-4o-mini`）或 **Anthropic API Key**
 
 ### 2. 安装依赖
@@ -181,6 +180,10 @@ Agent-Paradigm-Hub/
 │           ├── langchain/workflow.py
 │           └── langgraph/workflow.py
 │
+│   └── multimodal/                   # 【四】多模态示例
+│       └── seedream/                   # 豆包 Seedream 5.0-lite 图像生成（Agent Plan API）
+│           └── example.py
+│
 ├── ai.py                              # 🧪 根目录快速演示：单文件 LangGraph ReAct（工具调用 + 图编排）
 ├── requirements.txt                   # 原生实现依赖
 ├── requirements-langchain.txt         # LangChain 额外依赖
@@ -218,9 +221,7 @@ Agent-Paradigm-Hub/
 **源码路径**：
 
 - 原生实现：[examples/single\_agent/react/native/agent.py](examples/single_agent/react/native/agent.py)
-
 - LangChain 实现：[examples/single\_agent/react/langchain/agent.py](examples/single_agent/react/langchain/agent.py)
-
 - LangGraph 实现：[examples/single\_agent/react/langgraph/agent.py](examples/single_agent/react/langgraph/agent.py)
 
 **运行命令**：
@@ -256,9 +257,7 @@ python -m examples.single_agent.react.langgraph.agent
 **源码路径**：
 
 - 原生实现：[examples/single\_agent/plan\_execute/native/agent.py](examples/single_agent/plan_execute/native/agent.py)
-
 - LangChain 实现：[examples/single\_agent/plan\_execute/langchain/agent.py](examples/single_agent/plan_execute/langchain/agent.py)
-
 - LangGraph 实现：[examples/single\_agent/plan\_execute/langgraph/agent.py](examples/single_agent/plan_execute/langgraph/agent.py)
 
 **运行命令**：
@@ -297,9 +296,7 @@ for i in 1..max_iterations:
 **源码路径**：
 
 - 原生实现：[examples/single\_agent/reflection/native/agent.py](examples/single_agent/reflection/native/agent.py)
-
 - LangChain 实现：[examples/single\_agent/reflection/langchain/agent.py](examples/single_agent/reflection/langchain/agent.py)
-
 - LangGraph 实现：[examples/single\_agent/reflection/langgraph/agent.py](examples/single_agent/reflection/langgraph/agent.py)
 
 **运行命令**：
@@ -335,9 +332,7 @@ Judge LLM 读完整 history → 给出中立总结 + 综合判断
 **源码路径**：
 
 - 原生实现：[examples/multi\_agent/debate/native/agent.py](examples/multi_agent/debate/native/agent.py)
-
 - LangChain 实现：[examples/multi\_agent/debate/langchain/agent.py](examples/multi_agent/debate/langchain/agent.py)
-
 - LangGraph 实现：[examples/multi\_agent/debate/langgraph/agent.py](examples/multi_agent/debate/langgraph/agent.py)
 
 **运行命令**：
@@ -374,9 +369,7 @@ Synthesizer LLM 整合 p1~p4 → 最终决策建议
 **源码路径**：
 
 - 原生实现：[examples/multi\_agent/multi\_brain/native/agent.py](examples/multi_agent/multi_brain/native/agent.py)
-
 - LangChain 实现：[examples/multi\_agent/multi\_brain/langchain/agent.py](examples/multi_agent/multi_brain/langchain/agent.py)
-
 - LangGraph 实现：[examples/multi\_agent/multi\_brain/langgraph/agent.py](examples/multi_agent/multi_brain/langgraph/agent.py)
 
 **运行命令**：
@@ -411,9 +404,7 @@ Orchestrator 汇总 context → 最终整合报告
 **源码路径**：
 
 - 原生实现：[examples/multi\_agent/orchestrator\_worker/native/agent.py](examples/multi_agent/orchestrator_worker/native/agent.py)
-
 - LangChain 实现：[examples/multi\_agent/orchestrator\_worker/langchain/agent.py](examples/multi_agent/orchestrator_worker/langchain/agent.py)
-
 - LangGraph 实现：[examples/multi\_agent/orchestrator\_worker/langgraph/agent.py](examples/multi_agent/orchestrator_worker/langgraph/agent.py)
 
 **运行命令**：
@@ -449,9 +440,7 @@ Step 3（推文提炼）: system_prompt_3 + user_template_3.format(input=out2)  
 **源码路径**：
 
 - 原生实现：[examples/workflow/prompt\_chaining/native/workflow.py](examples/workflow/prompt_chaining/native/workflow.py)
-
 - LangChain 实现：[examples/workflow/prompt\_chaining/langchain/workflow.py](examples/workflow/prompt_chaining/langchain/workflow.py)
-
 - LangGraph 实现：[examples/workflow/prompt\_chaining/langgraph/workflow.py](examples/workflow/prompt_chaining/langgraph/workflow.py)
 
 **运行命令**：
@@ -489,9 +478,7 @@ switch route_key:
 **源码路径**：
 
 - 原生实现：[examples/workflow/routing/native/workflow.py](examples/workflow/routing/native/workflow.py)
-
 - LangChain 实现：[examples/workflow/routing/langchain/workflow.py](examples/workflow/routing/langchain/workflow.py)
-
 - LangGraph 实现：[examples/workflow/routing/langgraph/workflow.py](examples/workflow/routing/langgraph/workflow.py)
 
 **运行命令**：
@@ -528,9 +515,7 @@ Synthesizer LLM 整合 results_map → 最终主任务答案
 **源码路径**：
 
 - 原生实现：[examples/workflow/parallelization/native/workflow.py](examples/workflow/parallelization/native/workflow.py)
-
 - LangChain 实现：[examples/workflow/parallelization/langchain/workflow.py](examples/workflow/parallelization/langchain/workflow.py)
-
 - LangGraph 实现：[examples/workflow/parallelization/langgraph/workflow.py](examples/workflow/parallelization/langgraph/workflow.py)
 
 **运行命令**：
@@ -572,9 +557,7 @@ for i in 1..max_iterations:
 **源码路径**：
 
 - 原生实现：[examples/workflow/evaluator\_optimizer/native/workflow.py](examples/workflow/evaluator_optimizer/native/workflow.py)
-
 - LangChain 实现：[examples/workflow/evaluator\_optimizer/langchain/workflow.py](examples/workflow/evaluator_optimizer/langchain/workflow.py)
-
 - LangGraph 实现：[examples/workflow/evaluator\_optimizer/langgraph/workflow.py](examples/workflow/evaluator_optimizer/langgraph/workflow.py)
 
 **运行命令**：
@@ -737,11 +720,8 @@ A：**可以作为架构模板，不建议原封不动搬**。生产环境还需
 欢迎 Issue / PR！建议的贡献方向：
 
 - 新增范式：Tree of Thoughts、Self-Consistency、Mixture-of-Agents、Graph-based Multi-Agent 等
-
 - 新增 Provider 支持（DashScope、ZhipuAI、Gemini、Bedrock 等）
-
 - 新增真实可用工具（搜索 API、计算器 API、MCP 工具等）
-
 - 修复 Bug、补充更多 LangGraph / LlamaIndex 等价实现
 
 最小 PR 参考「扩展指南 - 3. 如何新增一种范式」四步曲即可。
@@ -770,9 +750,7 @@ A：**可以作为架构模板，不建议原封不动搬**。生产环境还需
 ## 🧑‍💻 致谢
 
 - 感谢 **OpenAI** / **Anthropic** 提供强大的 LLM API；
-
 - 感谢 **LangChain 团队**打造的 `langchain-core` / `langchain-community` 框架生态；
-
 - 感谢所有探索 LLM Agent 范式的研究者与开源贡献者，你们的工作让这个仓库的内容成为可能。
 
 ***
