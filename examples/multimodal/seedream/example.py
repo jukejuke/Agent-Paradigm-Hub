@@ -211,10 +211,10 @@ def image_to_image(
     response = client.images.generate(
         model=model,
         prompt=prompt,
-        image=image_arg,
         size=size,
         n=1,
-        extra_body={"watermark": watermark},
+        # openai SDK 3.x 不再提供 image 参数，图生图参考图需经 extra_body 透传到请求体
+        extra_body={"image": image_arg, "watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
@@ -252,8 +252,8 @@ def generate_with_web_search(
         prompt=prompt,
         size=size,
         n=1,
-        tools=[{"type": "web_search"}],
-        extra_body={"watermark": watermark},
+        # openai SDK 3.x 不识别 tools 参数，联网搜索需经 extra_body 透传到请求体
+        extra_body={"tools": [{"type": "web_search"}], "watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
