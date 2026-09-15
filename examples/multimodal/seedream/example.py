@@ -259,9 +259,15 @@ def main():
     # 2. 文生图：根据提示词直接生成图片
     try:
         print("\n=== 1. 文生图 ===")
+        """
         paths = text_to_image(
             client,
             prompt="一只戴着墨镜的橘猫，坐在海边，日落，超写实",
+        )
+        """
+        paths = text_to_image(
+            client,
+            prompt="一只小熊，做在山峰，日落，动画形式",
         )
         print(f"生成并保存 {len(paths)} 张图片：")
         for p in paths:
@@ -275,7 +281,7 @@ def main():
         paths = image_to_image(
             client,
             prompt="将参考图中的主体置于雪景中，保持主体一致，电影感",
-            image="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/320px-Cat_November_2010-1a.jpg",
+            image="http://qiuniu.xingrui-cn.com/1391154446972487606.jpg",
         )
         print(f"生成并保存 {len(paths)} 张图片：")
         for p in paths:
