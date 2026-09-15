@@ -83,6 +83,7 @@ def text_to_image_with_text(
     size: str = "2K",
     model: str = DEFAULT_MODEL,
     save_dir: str = DEFAULT_SAVE_DIR,
+    watermark: bool = True,
 ) -> list[str]:
     """
     文生图生成带指定文字的图片
@@ -90,6 +91,7 @@ def text_to_image_with_text(
     说明：
     - 提示词需把要渲染的文字内容显式写出（可用「」标注），并强调文字一致性
     - 支持中英文文字渲染（Seedream 5.0-lite 特性）
+    - watermark 为 False 时不添加「AI 生成」水印
 
     Args:
         client: Agent Plan OpenAI 兼容客户端
@@ -97,6 +99,7 @@ def text_to_image_with_text(
         size: 分辨率档位，默认 "2K"
         model: 模型 ID，默认 doubao-seedream-5-0-lite-260128
         save_dir: 保存目录，默认 "output"
+        watermark: 是否在图片右下角添加「AI 生成」水印，默认 True
 
     Returns:
         保存到本地的图片文件路径列表
@@ -106,6 +109,7 @@ def text_to_image_with_text(
         prompt=prompt,
         size=size,
         n=1,
+        extra_body={"watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
@@ -117,6 +121,7 @@ def edit_image_text(
     size: str = "2K",
     model: str = DEFAULT_MODEL,
     save_dir: str = DEFAULT_SAVE_DIR,
+    watermark: bool = True,
 ) -> list[str]:
     """
     图生图修改图中文字：参考一张含文字的图，用提示词把原文字替换为新文字
@@ -125,6 +130,7 @@ def edit_image_text(
     - 参考图支持公网 URL 字符串、本地文件路径字符串，或二者组成的列表
     - 本地文件路径会自动转换为 Base64 编码（data:image/<格式>;base64,<...>）
     - 提示词需同时指定「原文字 -> 新文字」与「保持主体/版式/画风」
+    - watermark 为 False 时不添加「AI 生成」水印
 
     Args:
         client: Agent Plan OpenAI 兼容客户端
@@ -133,6 +139,7 @@ def edit_image_text(
         size: 分辨率档位，默认 "2K"
         model: 模型 ID，默认 doubao-seedream-5-0-lite-260128
         save_dir: 保存目录，默认 "output"
+        watermark: 是否在图片右下角添加「AI 生成」水印，默认 True
 
     Returns:
         保存到本地的图片文件路径列表
@@ -155,7 +162,7 @@ def edit_image_text(
         size=size,
         n=1,
         # openai SDK 3.x 不再提供 image 参数，图生图参考图需经 extra_body 透传到请求体
-        extra_body={"image": image_arg},
+        extra_body={"image": image_arg, "watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
@@ -174,7 +181,7 @@ def main():
     poster_paths = []
     try:
         print("\n=== 场景一：文生图带文字（海报标题） ===")
-        poster_paths = text_to_image_with_text(client, POSTER_PROMPT)
+        poster_paths = text_to_image_with_text(client, POSTER_PROMPT, watermark=False)
         print(f"生成并保存 {len(poster_paths)} 张图片：")
         for p in poster_paths:
             print(f"  - {p}")
@@ -184,7 +191,7 @@ def main():
 
     try:
         print("\n=== 场景一：文生图带文字（店招） ===")
-        sign_paths = text_to_image_with_text(client, SHOP_SIGN_PROMPT)
+        sign_paths = text_to_image_with_text(client, SHOP_SIGN_PROMPT, watermark=False)
         print(f"生成并保存 {len(sign_paths)} 张图片：")
         for p in sign_paths:
             print(f"  - {p}")
@@ -202,7 +209,7 @@ def main():
         else:
             ref_image = REFERENCE_IMAGE_URL
             print(f"参考图（公网 URL，建议替换为含文字的本地图片）：{ref_image}")
-        paths = edit_image_text(client, ref_image, EDIT_TEXT_PROMPT)
+        paths = edit_image_text(client, ref_image, EDIT_TEXT_PROMPT, watermark=False)
         print(f"生成并保存 {len(paths)} 张图片：")
         for p in paths:
             print(f"  - {p}")

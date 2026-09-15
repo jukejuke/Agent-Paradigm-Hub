@@ -83,6 +83,7 @@ def style_transfer(
     size: str = "2K",
     model: str = DEFAULT_MODEL,
     save_dir: str = DEFAULT_SAVE_DIR,
+    watermark: bool = True,
 ) -> list[str]:
     """
     图片风格迁移：以参考图为输入，按风格提示词生成新风格图片
@@ -91,6 +92,7 @@ def style_transfer(
     - 参考图支持公网 URL 字符串、本地文件路径字符串，或二者组成的列表
     - 本地文件路径会自动转换为 Base64 编码（data:image/<格式>;base64,<...>）
     - 单图传字符串，多图传列表
+    - watermark 为 False 时不添加「AI 生成」水印
 
     Args:
         client: Agent Plan OpenAI 兼容客户端
@@ -99,6 +101,7 @@ def style_transfer(
         size: 分辨率档位，默认 "2K"
         model: 模型 ID，默认 doubao-seedream-5-0-lite-260128
         save_dir: 保存目录，默认 "output"
+        watermark: 是否在图片右下角添加「AI 生成」水印，默认 True
 
     Returns:
         保存到本地的图片文件路径列表
@@ -121,7 +124,7 @@ def style_transfer(
         size=size,
         n=1,
         # openai SDK 3.x 不再提供 image 参数，图生图参考图需经 extra_body 透传到请求体
-        extra_body={"image": image_arg},
+        extra_body={"image": image_arg, "watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
@@ -139,7 +142,7 @@ def main():
     # 2. 先文生图生成一张基础参考图（本地保存，避免外部公网 URL 不可达）
     try:
         print("\n=== 生成基础参考图（文生图） ===")
-        ref_paths = text_to_image(client, prompt=BASE_IMAGE_PROMPT)
+        ref_paths = text_to_image(client, prompt=BASE_IMAGE_PROMPT, watermark=False)
         print(f"生成并保存 {len(ref_paths)} 张图片：")
         for p in ref_paths:
             print(f"  - {p}")
@@ -154,7 +157,7 @@ def main():
     for style_name, style_prompt in STYLE_PROMPTS:
         try:
             print(f"\n=== 风格迁移：{style_name} ===")
-            paths = style_transfer(client, ref_image, style_prompt)
+            paths = style_transfer(client, ref_image, style_prompt, watermark=False)
             print(f"生成并保存 {len(paths)} 张图片：")
             for p in paths:
                 print(f"  - {p}")

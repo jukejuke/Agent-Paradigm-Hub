@@ -133,6 +133,7 @@ def text_to_image(
     n: int = 1,
     model: str = DEFAULT_MODEL,
     save_dir: str = DEFAULT_SAVE_DIR,
+    watermark: bool = True,
 ) -> list[str]:
     """
     文生图：根据提示词直接生成图片
@@ -141,6 +142,7 @@ def text_to_image(
     - size 支持 2K / 3K 两个分辨率档位（Seedream 5.0-lite）
     - 如需生成一组内容关联的组图，可追加参数 sequential_image_generation="auto"
       （参考图数量 + 最终生成图片数量 ≤ 15 张）
+    - watermark 为 False 时不添加「AI 生成」水印
 
     Args:
         client: Agent Plan OpenAI 兼容客户端
@@ -149,6 +151,7 @@ def text_to_image(
         n: 生成图片数量，默认 1
         model: 模型 ID，默认 doubao-seedream-5-0-lite-260128
         save_dir: 保存目录，默认 "output"
+        watermark: 是否在图片右下角添加「AI 生成」水印，默认 True
 
     Returns:
         保存到本地的图片文件路径列表
@@ -158,6 +161,7 @@ def text_to_image(
         prompt=prompt,
         size=size,
         n=n,
+        extra_body={"watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
@@ -169,6 +173,7 @@ def image_to_image(
     size: str = "2K",
     model: str = DEFAULT_MODEL,
     save_dir: str = DEFAULT_SAVE_DIR,
+    watermark: bool = True,
 ) -> list[str]:
     """
     图生图 / 多图参考：结合参考图与提示词生成新图
@@ -177,6 +182,7 @@ def image_to_image(
     - image 支持公网 URL、本地文件路径，或由二者组成的列表
     - 本地文件会自动转换为 Base64 编码（data:image/<格式>;base64,<...>）
     - 传入多张参考图可实现多图融合（多图生图 / 多图生组图）
+    - watermark 为 False 时不添加「AI 生成」水印
 
     Args:
         client: Agent Plan OpenAI 兼容客户端
@@ -185,6 +191,7 @@ def image_to_image(
         size: 分辨率档位，默认 "2K"
         model: 模型 ID，默认 doubao-seedream-5-0-lite-260128
         save_dir: 保存目录，默认 "output"
+        watermark: 是否在图片右下角添加「AI 生成」水印，默认 True
 
     Returns:
         保存到本地的图片文件路径列表
@@ -207,6 +214,7 @@ def image_to_image(
         image=image_arg,
         size=size,
         n=1,
+        extra_body={"watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
@@ -217,6 +225,7 @@ def generate_with_web_search(
     size: str = "2K",
     model: str = DEFAULT_MODEL,
     save_dir: str = DEFAULT_SAVE_DIR,
+    watermark: bool = True,
 ) -> list[str]:
     """
     联网搜索生图：融合实时网络信息生成图片（5.0-lite 独有能力）
@@ -225,6 +234,7 @@ def generate_with_web_search(
     - 通过 tools=[{"type": "web_search"}] 开启联网搜索
     - 模型会根据提示词自主判断是否搜索互联网，适合时效性强的主题
     - 标准版 doubao-seedream-5-0-260128 不支持该能力
+    - watermark 为 False 时不添加「AI 生成」水印
 
     Args:
         client: Agent Plan OpenAI 兼容客户端
@@ -232,6 +242,7 @@ def generate_with_web_search(
         size: 分辨率档位，默认 "2K"
         model: 模型 ID，需使用 5.0-lite 才支持联网搜索
         save_dir: 保存目录，默认 "output"
+        watermark: 是否在图片右下角添加「AI 生成」水印，默认 True
 
     Returns:
         保存到本地的图片文件路径列表
@@ -242,6 +253,7 @@ def generate_with_web_search(
         size=size,
         n=1,
         tools=[{"type": "web_search"}],
+        extra_body={"watermark": watermark},
     )
     return save_generated_images(response, save_dir=save_dir)
 
@@ -265,9 +277,17 @@ def main():
             prompt="一只戴着墨镜的橘猫，坐在海边，日落，超写实",
         )
         """
+        """
         paths = text_to_image(
             client,
             prompt="一只小熊，做在山峰，日落，动画形式",
+            watermark=False,
+        )
+        """
+        paths = text_to_image(
+            client,
+            prompt="一只戴着墨镜的橘猫，坐在海边，日落，超写实",
+            watermark=False,
         )
         print(f"生成并保存 {len(paths)} 张图片：")
         for p in paths:
@@ -282,6 +302,7 @@ def main():
             client,
             prompt="将参考图中的主体置于雪景中，保持主体一致，电影感",
             image="http://qiuniu.xingrui-cn.com/1391154446972487606.jpg",
+            watermark=False,
         )
         print(f"生成并保存 {len(paths)} 张图片：")
         for p in paths:
@@ -295,6 +316,7 @@ def main():
         paths = generate_with_web_search(
             client,
             prompt="2026年中秋节主题海报，包含月亮与玉兔，国潮风格",
+            watermark=False,
         )
         print(f"生成并保存 {len(paths)} 张图片：")
         for p in paths:
