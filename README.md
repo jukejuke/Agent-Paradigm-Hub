@@ -182,7 +182,10 @@ Agent-Paradigm-Hub/
 │
 │   └── multimodal/                   # 【四】多模态示例
 │       └── seedream/                   # 豆包 Seedream 5.0-lite 图像生成（Agent Plan API）
-│           └── example.py
+│           ├── example.py                # 基础能力：文生图 / 图生图 / 联网搜索生图
+│           └── prompt_edit/              # 提示词驱动的图片样式 / 文字修改
+│               ├── style_edit.py           # 风格迁移（水墨 / 赛博朋克 / 油画 / 3D 卡通）
+│               └── text_edit.py            # 文字渲染与替换（文生图带文字 / 图生图改字）
 │
 ├── ai.py                              # 🧪 根目录快速演示：单文件 LangGraph ReAct（工具调用 + 图编排）
 ├── requirements.txt                   # 原生实现依赖
@@ -567,6 +570,22 @@ python -m examples.workflow.evaluator_optimizer.native.workflow
 python -m examples.workflow.evaluator_optimizer.langchain.workflow
 python -m examples.workflow.evaluator_optimizer.langgraph.workflow
 ```
+
+***
+
+## 🌄 多模态示例（Multimodal）
+
+### ① Doubao Seedream 5.0-lite 图像生成（Agent Plan API）
+
+通过火山方舟「Agent Plan」的 OpenAI 兼容接口调用豆包图像生成模型 `doubao-seedream-5-0-lite-260128`，按提示词完成图片的生成、风格修改与文字修改：
+
+| 示例 | 能力 | 运行命令 |
+| --- | --- | --- |
+| [example.py](examples/multimodal/seedream/example.py) | 基础能力：文生图 / 图生图 / 联网搜索生图 | `python -m examples.multimodal.seedream.example` |
+| [style_edit.py](examples/multimodal/seedream/prompt_edit/style_edit.py) | 提示词修改图片样式（风格迁移：水墨 / 赛博朋克 / 油画 / 3D 卡通） | `python -m examples.multimodal.seedream.prompt_edit.style_edit` |
+| [text_edit.py](examples/multimodal/seedream/prompt_edit/text_edit.py) | 提示词修改图片文字（文生图带文字 / 图生图改字） | `python -m examples.multimodal.seedream.prompt_edit.text_edit` |
+
+> 💡 运行前提：在根目录 `.env` 中配置 Agent Plan 专属 API Key（`AGENT_PLAN_API_KEY`）。
 
 ***
 
