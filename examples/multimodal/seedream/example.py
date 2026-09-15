@@ -8,7 +8,8 @@ Doubao Seedream 5.0-lite 图像生成示例（火山方舟 Agent Plan API）
 1. 文生图（text-to-image）：根据提示词直接生成图片
 2. 图生图 / 多图参考（image-to-image）：结合参考图生成新图
 3. 联网搜索生图（web_search，5.0-lite 独有）：融合实时网络信息生成图片
-4. 结果保存：自动将生成结果下载 / 解码保存到本地 output 目录
+4. 图标生成（icon generation）：根据主题与风格生成应用/UI 图标
+5. 结果保存：自动将生成结果下载 / 解码保存到本地 output 目录
 
 模型 ID 对照：
 - doubao-seedream-5-0-lite-260128  ：Seedream 5.0-lite（支持联网搜索）
@@ -258,6 +259,53 @@ def generate_with_web_search(
     return save_generated_images(response, save_dir=save_dir)
 
 
+def generate_icon(
+    client,
+    icon_type: str = "天气",
+    style: str = "扁平化",
+    background: str = "纯白背景",
+    size: str = "2K",
+    model: str = DEFAULT_MODEL,
+    save_dir: str = DEFAULT_SAVE_DIR,
+    watermark: bool = False,
+) -> list[str]:
+    """
+    图标生成：根据主题与风格生成应用/UI 图标
+
+    说明：
+    - 内部复用 text_to_image，按图标场景组织提示词（单一主体居中、纯色背景、正方形构图）
+    - 输出为位图（JPG/PNG），非矢量；如需可无限缩放需再矢量化
+    - 透明背景不保证：URL 返回的通常为 JPEG（无 alpha 通道），透明底会变白底
+    - watermark 默认 False，避免图标右下角带「AI 生成」水印
+
+    Args:
+        client: Agent Plan OpenAI 兼容客户端
+        icon_type: 图标主题描述，如 "天气"、"美食外卖"、"运动健身"
+        style: 图标风格，如 "扁平化"、"线性"、"3D 拟物"、"国潮"
+        background: 背景描述，如 "纯白背景"、"透明底"、"渐变背景"
+        size: 分辨率档位，默认 "2K"
+        model: 模型 ID，默认 doubao-seedream-5-0-lite-260128
+        save_dir: 保存目录，默认 "output"
+        watermark: 是否在图片右下角添加「AI 生成」水印，默认 False
+
+    Returns:
+        保存到本地的图片文件路径列表
+    """
+    prompt = (
+        f"{icon_type}应用图标，{style}风格，单一主体居中，"
+        f"{background}，UI 图标，简洁，高对比度，正方形构图"
+    )
+    return text_to_image(
+        client,
+        prompt=prompt,
+        size=size,
+        n=1,
+        model=model,
+        save_dir=save_dir,
+        watermark=watermark,
+    )
+
+
 def main():
     """演示 Doubao Seedream 5.0-lite 图像生成能力"""
     # 1. 校验 Agent Plan 专属 API Key 是否已配置
@@ -323,6 +371,22 @@ def main():
             print(f"  - {p}")
     except Exception as e:
         print(f"[联网搜索生图失败] {e}")
+
+    # 5. 图标生成：根据主题与风格生成应用图标
+    try:
+        print("\n=== 4. 图标生成 ===")
+        paths = generate_icon(
+            client,
+            icon_type="天气",
+            style="扁平化",
+            background="纯白背景",
+            watermark=False,
+        )
+        print(f"生成并保存 {len(paths)} 张图片：")
+        for p in paths:
+            print(f"  - {p}")
+    except Exception as e:
+        print(f"[图标生成失败] {e}")
 
     print("\n演示结束，所有结果已保存到 output/ 目录。")
 
