@@ -19,6 +19,7 @@
 | 🚀 **开箱即用，零门槛体验**       | 只需填入 API Key，`python -m examples.xxx` 即可运行完整 Demo；每个示例自带 `main()` 函数与演示问题，无需自己拼凑                                            |
 | 🧱 **模块化结构，易扩展**        | 统一的 `utils.llm_client.LLMClient` 屏蔽不同 LLM 厂商差异，新增 Provider、新增工具、新增范式都有清晰的扩展套路                                               |
 | 📝 **中文注释 + 中文 Prompt** | 所有代码头注释、函数级注释、系统 Prompt 全部为中文，便于国内开发者快速理解 Agent 内部工作机制                                                                      |
+| 🛠️ **配套实用工具**          | [`tools/prompt_optimizer`](tools/README.md)：基于 Reflection + LangGraph 的编程提示词优化 Agent，把一句话需求打磨成可直接交给 Trae / Claude Code / OpenCode 执行的高质量提示词 |
 
 ***
 
@@ -59,6 +60,12 @@ pip install -r requirements-langgraph.txt
 
 内容：在方案 A 基础上追加 `langgraph` / `langchain-openai`，用于运行每个范式的 `langgraph/` 实现。
 
+> 🛠️ 想使用 [`tools/prompt_optimizer`](tools/README.md) 提示词优化工具，同样只需方案 C 的依赖，也可单独安装：
+>
+> ```bash
+> pip install -r tools/requirements.txt
+> ```
+
 ### 3. 配置环境变量
 
 ```bash
@@ -83,6 +90,13 @@ OPENAI_MODEL=gpt-4o-mini
 DEFAULT_PROVIDER=openai       # openai 或 anthropic
 DEFAULT_TEMPERATURE=0.7       # 0.0-2.0，越高越随机
 DEFAULT_MAX_TOKENS=4096       # 单次调用最大输出 token
+
+# --- 可选：多模态示例（火山方舟 Agent Plan 专属 Key，非方舟普通 Key）---
+# AGENT_PLAN_API_KEY=your-agent-plan-api-key-here
+
+# --- 可选：提示词优化工具（tools/prompt_optimizer）---
+# PROMPT_OPTIMIZER_TEMPERATURE=0.7
+# PROMPT_OPTIMIZER_MAX_ITERATIONS=3
 ```
 
 > 💡 如果你使用 **兼容 OpenAI 协议的中转服务 / 本地模型**（如 vLLM、Ollama、LM Studio 等），额外加一行：
@@ -162,30 +176,41 @@ Agent-Paradigm-Hub/
 │   │       ├── langchain/agent.py
 │   │       └── langgraph/agent.py
 │   │
-│   └── workflow/                     # 【三】工作流模式（4 种）
-│       ├── prompt_chaining/            # ⑦ Prompt Chaining：多步骤顺序链式
-│       │   ├── native/workflow.py
-│       │   ├── langchain/workflow.py
-│       │   └── langgraph/workflow.py
-│       ├── routing/                    # ⑧ Routing：意图识别路由分发
-│       │   ├── native/workflow.py
-│       │   ├── langchain/workflow.py
-│       │   └── langgraph/workflow.py
-│       ├── parallelization/            # ⑨ Parallelization：无依赖任务并发
-│       │   ├── native/workflow.py
-│       │   ├── langchain/workflow.py
-│       │   └── langgraph/workflow.py
-│       └── evaluator_optimizer/        # ⑩ Evaluator-Optimizer：生成-评估-改进循环
-│           ├── native/workflow.py
-│           ├── langchain/workflow.py
-│           └── langgraph/workflow.py
-│
+│   ├── workflow/                     # 【三】工作流模式（4 种）
+│   │   ├── prompt_chaining/            # ⑦ Prompt Chaining：多步骤顺序链式
+│   │   │   ├── native/workflow.py
+│   │   │   ├── langchain/workflow.py
+│   │   │   └── langgraph/workflow.py
+│   │   ├── routing/                    # ⑧ Routing：意图识别路由分发
+│   │   │   ├── native/workflow.py
+│   │   │   ├── langchain/workflow.py
+│   │   │   └── langgraph/workflow.py
+│   │   ├── parallelization/            # ⑨ Parallelization：无依赖任务并发
+│   │   │   ├── native/workflow.py
+│   │   │   ├── langchain/workflow.py
+│   │   │   └── langgraph/workflow.py
+│   │   └── evaluator_optimizer/        # ⑩ Evaluator-Optimizer：生成-评估-改进循环
+│   │       ├── native/workflow.py
+│   │       ├── langchain/workflow.py
+│   │       └── langgraph/workflow.py
+│   │
 │   └── multimodal/                   # 【四】多模态示例
 │       └── seedream/                   # 豆包 Seedream 5.0-lite 图像生成（Agent Plan API）
-│           ├── example.py                # 基础能力：文生图 / 图生图 / 联网搜索生图
+│           ├── example.py                # 基础能力：文生图 / 图生图 / 联网搜索生图 / 图标生成
 │           └── prompt_edit/              # 提示词驱动的图片样式 / 文字修改
 │               ├── style_edit.py           # 风格迁移（水墨 / 赛博朋克 / 油画 / 3D 卡通）
 │               └── text_edit.py            # 文字渲染与替换（文生图带文字 / 图生图改字）
+│
+├── tools/                             # 🛠️ 配套实用工具（详见 tools/README.md）
+│   ├── prompt_optimizer/               # 编程提示词优化 Agent（Reflection · LangGraph）
+│   │   ├── config.py                     # 模型 / 温度 / 最大迭代次数配置
+│   │   ├── criteria.py                   # 编程提示词质量评审维度清单
+│   │   ├── prompts.py                    # generate / reflect / refine 系统提示词
+│   │   ├── agent.py                      # 核心 Agent 实现（图构建 + 节点 + 路由）
+│   │   └── __main__.py                   # CLI 入口
+│   ├── requirements.txt                # 工具依赖（langgraph / langchain-openai）
+│   ├── .env.example                    # 工具环境变量模板
+│   └── README.md                       # 工具使用文档
 │
 ├── ai.py                              # 🧪 根目录快速演示：单文件 LangGraph ReAct（工具调用 + 图编排）
 ├── requirements.txt                   # 原生实现依赖
@@ -581,11 +606,77 @@ python -m examples.workflow.evaluator_optimizer.langgraph.workflow
 
 | 示例 | 能力 | 运行命令 |
 | --- | --- | --- |
-| [example.py](examples/multimodal/seedream/example.py) | 基础能力：文生图 / 图生图 / 联网搜索生图 | `python -m examples.multimodal.seedream.example` |
+| [example.py](examples/multimodal/seedream/example.py) | 基础能力：文生图 / 图生图（含多图参考） / 联网搜索生图 / 图标生成 | `python -m examples.multimodal.seedream.example` |
 | [style_edit.py](examples/multimodal/seedream/prompt_edit/style_edit.py) | 提示词修改图片样式（风格迁移：水墨 / 赛博朋克 / 油画 / 3D 卡通） | `python -m examples.multimodal.seedream.prompt_edit.style_edit` |
 | [text_edit.py](examples/multimodal/seedream/prompt_edit/text_edit.py) | 提示词修改图片文字（文生图带文字 / 图生图改字） | `python -m examples.multimodal.seedream.prompt_edit.text_edit` |
 
+说明：
+
+- 所有生成函数均支持 `watermark` 参数（默认 `True` 会添加「AI 生成」水印，传 `False` 可关闭）；
+- `example.py` 中的**图标生成**（`generate_icon`，按主题 + 风格生成应用/UI 图标）演示默认以注释形式保留，需要时解开对应代码块即可运行；
+- 风格迁移与文字修改示例均复用 `example.py` 的共享函数，并先用文生图生成参考图，避免依赖外部公网图片。
+
 > 💡 运行前提：在根目录 `.env` 中配置 Agent Plan 专属 API Key（`AGENT_PLAN_API_KEY`）。
+
+***
+
+## 🛠️ 配套工具（Tools）
+
+除了范式示例，仓库还提供一个可直接使用的**编程输入提示词优化 Agent**：[tools/prompt_optimizer](tools/README.md)。
+
+### 编程输入提示词优化 Agent（Reflection · LangGraph）
+
+**它能做什么**：把一句话想法、不完整的开发需求，经 **生成初稿 → 严厉批评 → 按批评改进** 的 Reflection 循环迭代，打磨成一份包含「任务目标 / 上下文 / 执行步骤 / 约束 / 验收标准 / 输出格式」的高质量提示词，整段复制给 **Trae / Claude Code / OpenCode / Cursor** 等编程智能体即可执行。
+
+**核心流程**：
+
+```
+原始需求
+  ↓
+generate：LLM 以「提示词工程师」身份产出初稿
+  ↓
+reflect：LLM 以「严厉批评者」身份按 7 个维度评审
+        （目标明确性 / 上下文完整 / 步骤可执行 / 约束禁忌 / 验收标准 / 输出格式 / 规模控制）
+  ↓
+refine：LLM 按批评意见改进提示词
+  ↓
+重复 reflect ↔ refine，直到批评判定「已足够好」或达到最大迭代次数
+  ↓
+输出最终优化提示词（自动剥离 Markdown 代码围栏，便于直接复制）
+```
+
+图结构：`generate → reflect → (refine → reflect)* → END`（LangGraph `StateGraph` 显式建模该循环）。
+
+**运行命令**：
+
+```bash
+# 方式一：命令行直接传参
+python -m tools.prompt_optimizer "请帮我写一个 Python 脚本，从 CSV 读取数据并生成统计图表。"
+
+# 方式二：交互式输入
+python -m tools.prompt_optimizer
+```
+
+**作为模块调用**：
+
+```python
+from tools.prompt_optimizer import PromptOptimizerAgent
+
+agent = PromptOptimizerAgent()
+optimized = agent.optimize("给电商后台加一个导出订单 Excel 的功能")
+print(optimized)  # 复制给 Trae / Claude Code / OpenCode 执行
+```
+
+**可调参数**：
+
+| 环境变量                          | 说明                            | 默认值        |
+| --------------------------------- | ------------------------------- | ------------- |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | 模型凭据与模型名                | `gpt-4o-mini` |
+| `OPENAI_BASE_URL`                 | 兼容 OpenAI 协议的中转 / 本地地址 | 无           |
+| `PROMPT_OPTIMIZER_TEMPERATURE`    | 采样温度                        | `0.7`         |
+| `PROMPT_OPTIMIZER_MAX_ITERATIONS` | 反思-改进最大迭代次数           | `3`           |
+
+> 📖 更详细的用法、目录结构与工作原理见 [tools/README.md](tools/README.md)。
 
 ***
 
@@ -680,7 +771,7 @@ LangChain 版本更简单，给新函数加 `@tool` 装饰器并放进 `TOOLS` �
 
 ### 3. 如何新增一种范式（如「Tree of Thoughts」）
 
-1. 建目录：`examples/<分类>/<你的范式名>/`，下挂 `native/` 和 `langchain/` 两个子目录；
+1. 建目录：`examples/<分类>/<你的范式名>/`，下挂 `native/`、`langchain/`、`langgraph/` 三个子目录；
 2. 每个子目录中创建 `agent.py`（或 `workflow.py`），包含完整的类实现、`main()` 演示入口；
 3. 在相应的父级目录添加 `__init__.py`（空文件即可），保证 `python -m examples.xxx.yyy.zzz` 能正常运行；
 4. 回到本 README 的「📚 范式大全」章节补登记：核心思想 / 场景 / 流程 / 源码路径 / 运行命令。
