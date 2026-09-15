@@ -373,6 +373,7 @@ def main():
         print(f"[联网搜索生图失败] {e}")
 
     # 5. 图标生成：根据主题与风格生成应用图标
+    """
     try:
         print("\n=== 4. 图标生成 ===")
         paths = generate_icon(
@@ -387,6 +388,7 @@ def main():
             print(f"  - {p}")
     except Exception as e:
         print(f"[图标生成失败] {e}")
+    """
 
     print("\n演示结束，所有结果已保存到 output/ 目录。")
 
