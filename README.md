@@ -195,11 +195,17 @@ Agent-Paradigm-Hub/
 │   │       └── langgraph/workflow.py
 │   │
 │   └── multimodal/                   # 【四】多模态示例
-│       └── seedream/                   # 豆包 Seedream 5.0-lite 图像生成（Agent Plan API）
-│           ├── example.py                # 基础能力：文生图 / 图生图 / 联网搜索生图 / 图标生成
-│           └── prompt_edit/              # 提示词驱动的图片样式 / 文字修改
-│               ├── style_edit.py           # 风格迁移（水墨 / 赛博朋克 / 油画 / 3D 卡通）
-│               └── text_edit.py            # 文字渲染与替换（文生图带文字 / 图生图改字）
+│       ├── seedream/                   # 豆包 Seedream 5.0-lite 图像生成（Agent Plan API）
+│       │   ├── example.py                # 基础能力：文生图 / 图生图 / 联网搜索生图 / 图标生成
+│       │   └── prompt_edit/              # 提示词驱动的图片样式 / 文字修改
+│       │       ├── style_edit.py           # 风格迁移（水墨 / 赛博朋克 / 油画 / 3D 卡通）
+│       │       └── text_edit.py            # 文字渲染与替换（文生图带文字 / 图生图改字）
+│       └── agnes/                      # Agnes Image 2.5 Flash 图像生成与编辑（OpenAI 兼容接口）
+│           ├── config/                   # 模型配置（模型 ID / Base URL / 档位 / 比例 / 版本）
+│           ├── core/                     # 核心功能（文生图 / 风格迁移 / 文字编辑）
+│           ├── utils/                    # 工具函数（错误处理 / 图片处理 / 提示词构建）
+│           ├── examples/                 # 完整示例（generate / style_edit / text_edit）
+│           └── docs/                     # API 文档与使用指南
 │
 ├── tools/                             # 🛠️ 配套实用工具（详见 tools/README.md）
 │   ├── prompt_optimizer/               # 编程提示词优化 Agent（Reflection · LangGraph）
@@ -617,6 +623,26 @@ python -m examples.workflow.evaluator_optimizer.langgraph.workflow
 - 风格迁移与文字修改示例均复用 `example.py` 的共享函数，并先用文生图生成参考图，避免依赖外部公网图片。
 
 > 💡 运行前提：在根目录 `.env` 中配置 Agent Plan 专属 API Key（`AGENT_PLAN_API_KEY`）。
+
+***
+
+### ② Agnes Image 2.5 Flash 图像生成与编辑（OpenAI 兼容接口）
+
+通过 Agnes AI 的 OpenAI 兼容接口调用图像生成模型 `agnes-image-2.5-flash`，按提示词完成图片的生成、样式修改与文字编辑（加字 / 改字 / 删字），模块按「配置 / 核心 / 工具 / 示例 / 文档」五类目录组织：
+
+| 示例 | 能力 | 运行命令 |
+| --- | --- | --- |
+| [example_generate.py](examples/multimodal/agnes/examples/example_generate.py) | 文生图：根据提示词生成图片（支持分辨率档位 / 宽高比） | `python -m examples.multimodal.agnes.examples.example_generate` |
+| [example_style_edit.py](examples/multimodal/agnes/examples/example_style_edit.py) | 图生图样式修改：风格迁移（水墨 / 赛博朋克 / 油画） | `python -m examples.multimodal.agnes.examples.example_style_edit` |
+| [example_text_edit.py](examples/multimodal/agnes/examples/example_text_edit.py) | 文字编辑：文生图带文字 / 图生图改字 / 图生图删字 | `python -m examples.multimodal.agnes.examples.example_text_edit` |
+
+说明：
+
+- 支持分辨率档位 `1K / 2K / 3K / 4K` 与宽高比 `1:1 / 16:9 / 9:16` 等；核心函数内置 429 / 5xx 指数退避重试；
+- 图生图参考图支持公网 URL 与本地路径（本地自动转 Base64）；风格迁移与文字编辑示例先文生图生成参考图，避免依赖外部公网图片；
+- 完整 API 文档与使用指南见 [agnes/docs/API.md](examples/multimodal/agnes/docs/API.md) 与 [agnes/docs/USAGE.md](examples/multimodal/agnes/docs/USAGE.md)。
+
+> 💡 运行前提：在根目录 `.env` 中配置 Agnes API Key（`AGNES_API_KEY`），可选 `AGNES_BASE_URL` 切换节点。
 
 ***
 
