@@ -6,7 +6,7 @@ Agnes 视频预览工具
 os.startfile，其他平台使用浏览器打开 file:// 地址），也可生成
 含 <video> 标签的本地 HTML 预览页。
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 

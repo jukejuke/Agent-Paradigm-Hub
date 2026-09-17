@@ -10,7 +10,7 @@
 
 视频生成采用**异步任务式 API**：创建任务 → 轮询进度 → 下载 MP4，流程完整封装在 [src/generate.py](src/generate.py) 中。
 
-> 作者: yaosh ｜ 日期: 2026-09-17 ｜ 依赖: Python 3.8+ ｜ 接口依据官方 [Agnes Video 2.5 Flash 文档](https://wiki.agnes-ai.com/zh-Hans/docs/agnes-video-25-flash)
+> 作者: Sol ｜ 日期: 2026-09-17 ｜ 依赖: Python 3.8+ ｜ 接口依据官方 [Agnes Video 2.5 Flash 文档](https://wiki.agnes-ai.com/zh-Hans/docs/agnes-video-25-flash)
 
 ---
 

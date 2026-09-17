@@ -4,7 +4,7 @@ Agnes Video 2.5 Flash 示例项目 - 配置目录
 
 集中导出模型配置与参数校验函数，供 src / utils / examples 复用。
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 

@@ -13,7 +13,7 @@ Agnes 视频模型配置
 - aspect_ratio 支持 21:9 / 16:9 / 4:3 / 1:1 / 3:4 / 9:16，默认 16:9
 - 结果查询推荐 GET /agnesapi?video_id=<ID>&model_name=<模型ID>
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 

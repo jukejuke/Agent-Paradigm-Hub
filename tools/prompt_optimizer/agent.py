@@ -43,7 +43,7 @@ class OptimizerState(TypedDict):
 
 class PromptOptimizerAgent:
     """基于 Reflection 模式的编程提示词优化 Agent（LangGraph 实现）
-    作者: yaosh
+    作者: Sol
     日期: 2026-09-04
     """
 

@@ -16,7 +16,7 @@ load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 class OptimizerConfig:
     """提示词优化 Agent 的配置对象
-    作者: yaosh
+    作者: Sol
     日期: 2026-09-04
 
     支持通过环境变量覆盖默认值：

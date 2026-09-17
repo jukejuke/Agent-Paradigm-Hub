@@ -15,7 +15,7 @@ Agnes Video 2.5 Flash 图生视频示例
 环境变量：
     AGNES_API_KEY     # Agnes API Key（https://agnes-ai.com 控制台获取）
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 

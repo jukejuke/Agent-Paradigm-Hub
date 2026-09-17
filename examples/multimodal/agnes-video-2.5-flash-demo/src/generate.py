@@ -14,7 +14,7 @@ Agnes 视频生成模块（核心）
 - size 固定 "720P"；seconds 为字符串 "4"~"12"；aspect_ratio 默认 16:9
 - reference 模式下 images 最多 5 张，且必须是公网可访问的图片 URL
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 

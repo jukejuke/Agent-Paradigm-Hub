@@ -22,7 +22,7 @@ Doubao Seedream 5.0-lite 图片风格修改示例（火山方舟 Agent Plan API�
 环境变量：
     AGENT_PLAN_API_KEY   # Agent Plan 专属 API Key（非方舟普通 API Key）
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-14
 """
 

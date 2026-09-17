@@ -12,7 +12,7 @@ Agnes Video 2.5 Flash 风格迁移视频示例
     AGNES_API_KEY     # Agnes API Key（https://agnes-ai.com 控制台获取）
     AGNES_VIDEO_IMAGE_URL  # 可选风格参考图 URL，不配置时仅靠提示词控制风格
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 

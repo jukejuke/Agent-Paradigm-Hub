@@ -16,7 +16,7 @@ Agnes Video 2.5 Flash 命令行接口
     AGNES_BASE_URL    # 可选，默认 https://apihub.agnes-ai.com/v1
     AGNES_VIDEO_MODEL # 可选，默认 agnes-video-2.5-flash
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 

@@ -6,7 +6,7 @@ Agnes 视频 API 客户端
 创建任务（POST /videos）、查询结果（GET /agnesapi?video_id= 或
 GET /videos/<task_id>）与轮询等待。
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-17
 """
 
