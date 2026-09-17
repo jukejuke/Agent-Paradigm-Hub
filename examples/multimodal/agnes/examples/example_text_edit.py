@@ -13,7 +13,7 @@ Agnes Image 2.5 Flash 文字编辑示例
 环境变量：
     AGNES_API_KEY   # Agnes API Key
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-16
 """
 

@@ -12,7 +12,7 @@ Agnes Image 2.5 Flash 文生图示例
     AGNES_API_KEY   # Agnes API Key（https://agnes-ai.com 控制台获取）
     AGNES_BASE_URL  # 可选，默认 https://apihub.agnes-ai.com/v1
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-16
 """
 

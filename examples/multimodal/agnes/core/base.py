@@ -5,7 +5,7 @@ Agnes 核心共享基础
 提供统一的客户端创建、结果保存与参考图归一化逻辑，
 供 generate / style_edit / text_edit 三个核心模块复用。
 
-作者: yaosh
+作者: Sol
 日期: 2026-09-16
 """
 
