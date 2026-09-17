@@ -1,0 +1,4 @@
+# Agnes Video 2.5 Flash 示例项目依赖
+# 视频接口为自定义异步任务端点，无需 openai SDK；进度条与预览均用标准库实现
+requests>=2.31.0
+python-dotenv>=1.0.1
