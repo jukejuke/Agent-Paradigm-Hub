@@ -157,10 +157,14 @@ Agent-Paradigm-Hub/
 │   │   │   ├── native/agent.py
 │   │   │   ├── langchain/agent.py
 │   │   │   └── langgraph/agent.py
-│   │   └── reflection/                 # ③ Reflection：自我反思改进
-│   │       ├── native/agent.py
-│   │       ├── langchain/agent.py
-│   │       └── langgraph/agent.py
+│   │   ├── reflection/                 # ③ Reflection：自我反思改进
+│   │   │   ├── native/agent.py
+│   │   │   ├── langchain/agent.py
+│   │   │   └── langgraph/agent.py
+│   │   └── coding_agent/               # 实战：Coding Agent（生成-执行-评估-修复循环）
+│   │       ├── langgraph/                #   LangGraph 实现（模块化目录结构）
+│   │       ├── requirements.txt          #   示例依赖声明
+│   │       └── tests/                    #   单元测试（无需 API Key）
 │   │
 │   ├── multi_agent/                  # 【二】多智能体协作范式（3 种）
 │   │   ├── debate/                     # ④ Debate：对抗式辩论 + 裁判
@@ -601,6 +605,53 @@ python -m examples.workflow.evaluator_optimizer.native.workflow
 python -m examples.workflow.evaluator_optimizer.langchain.workflow
 python -m examples.workflow.evaluator_optimizer.langgraph.workflow
 ```
+
+***
+
+### ✨ Coding Agent 实战示例（LangGraph · 生成-执行-评估-修复循环）
+
+**核心思想**：模拟真实编码任务的最小闭环 —— Agent 根据需求**生成**代码 → 在沙箱中**执行**验证 → **评估**是否通过验收（规则 + LLM 评审）→ 未通过则按评审意见**修复**并再次执行，迭代直到通过验收或达到最大迭代次数。是「工具调用 + 决策循环」在编程场景的工程化落地，采用模块化目录结构（软件工程最佳实践）。
+
+**四大核心组件**：
+
+| 组件                     | 模块                        | 职责                                                     |
+| ---------------------- | --------------------------- | ------------------------------------------------------ |
+| 智能体状态管理模块 | `langgraph/state.py`        | `CodingAgentState` + 迭代历史（跟踪代码生成上下文）                  |
+| 工具调用接口           | `langgraph/tools.py`        | `run_python` 沙箱代码执行（subprocess + 超时 + 错误捕获）          |
+| 决策逻辑单元           | `langgraph/agent.py`        | `evaluate` 节点 + `should_continue` 条件边                 |
+| 循环执行机制           | `langgraph/agent.py`        | `StateGraph` 条件循环（generate → execute → evaluate ⇄ fix） |
+
+**核心流程**：
+
+```
+任务需求
+  ↓
+generate：LLM 生成初始代码（含 __main__ 自测入口）
+  ↓
+execute：沙箱执行 → 收集 stdout / 错误
+  ↓
+evaluate：规则（执行无错）+ LLM 评审 → passed?
+  ↓
+passed 或达到 max_iterations ──→ 输出最终代码
+  ↓（未通过）
+fix：按评审意见修复 → 回到 execute 再执行
+```
+
+**源码路径**：[examples/single\_agent/coding\_agent/langgraph/agent.py](examples/single_agent/coding_agent/langgraph/agent.py)
+
+**运行命令**：
+
+```bash
+python -m examples.single_agent.coding_agent.langgraph.agent
+```
+
+**测试命令**（无需 API Key）：
+
+```bash
+python -m pytest examples/single_agent/coding_agent/tests/ -q
+```
+
+📖 详细说明见 [coding_agent/langgraph/README.md](examples/single_agent/coding_agent/langgraph/README.md)。
 
 ***
 

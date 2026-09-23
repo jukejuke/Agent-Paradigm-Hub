@@ -1,0 +1,4 @@
+# Coding Agent 示例依赖（建议先安装项目根 requirements.txt，本文件为其增量声明）
+langgraph>=0.2.0        # LangGraph：状态图编排，实现循环执行机制
+langchain-openai>=0.1.0 # OpenAI 模型接入（ChatOpenAI）
+python-dotenv>=1.0.0    # 读取根目录 .env 配置（API Key 等）
