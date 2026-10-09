@@ -10,7 +10,7 @@ Coding Agent（代码生成智能体）- LangGraph 实现
 """
 import os
 import re
-from typing import Literal
+from typing import Literal, Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -22,13 +22,15 @@ from pathlib import Path
 # 相对导入优先；直接以脚本方式运行时回退到绝对导入
 try:
     from .state import CodingAgentState
-    from .tools import run_python
-    from .prompts import GENERATE_PROMPT, EVALUATE_PROMPT, FIX_PROMPT, strip_code_fence
+    from .tools import read_file, run_python, save_code
+    from .prompts import (
+        GENERATE_PROMPT, EVALUATE_PROMPT, FIX_PROMPT, MODIFY_PROMPT, strip_code_fence,
+    )
 except ImportError:
     from examples.single_agent.coding_agent.langgraph.state import CodingAgentState
-    from examples.single_agent.coding_agent.langgraph.tools import run_python
+    from examples.single_agent.coding_agent.langgraph.tools import read_file, run_python, save_code
     from examples.single_agent.coding_agent.langgraph.prompts import (
-        GENERATE_PROMPT, EVALUATE_PROMPT, FIX_PROMPT, strip_code_fence,
+        GENERATE_PROMPT, EVALUATE_PROMPT, FIX_PROMPT, MODIFY_PROMPT, strip_code_fence,
     )
 
 # 定位项目根目录并加载 .env（支持从任意目录直接运行本文件）
@@ -76,7 +78,10 @@ def _invoke_llm(system_prompt: str, user_content: str) -> str:
 
 def generate_node(state: CodingAgentState) -> dict:
     """
-    生成节点：根据任务需求生成初始代码
+    生成节点：根据任务需求生成或修改代码
+
+    从零生成模式（target_file 为空）：LLM 根据任务需求编写初始代码；
+    修改模式（target_file 非空）：LLM 基于现有代码按任务需求修改。
 
     Args:
         state: 当前图状态
@@ -84,10 +89,17 @@ def generate_node(state: CodingAgentState) -> dict:
     Returns:
         更新状态字典 {"code": 生成的代码}
     """
-    code = strip_code_fence(_invoke_llm(GENERATE_PROMPT, f"任务需求：\n{state['task']}"))
+    if state.get("target_file"):
+        # 修改模式：基于现有代码进行修改
+        user_content = f"任务需求：\n{state['task']}\n\n现有代码：\n{state['code']}"
+        code = strip_code_fence(_invoke_llm(MODIFY_PROMPT, user_content))
+        print(f"── [生成] 已基于现有代码完成修改（{len(code)} 字符）")
+    else:
+        # 从零生成模式
+        code = strip_code_fence(_invoke_llm(GENERATE_PROMPT, f"任务需求：\n{state['task']}"))
+        print(f"── [生成] 已生成初始代码（{len(code)} 字符）")
     if not code:
         raise RuntimeError("LLM 未返回有效代码，无法继续执行")
-    print(f"── [生成] 已生成初始代码（{len(code)} 字符）")
     return {"code": code}
 
 
@@ -188,6 +200,27 @@ def fix_node(state: CodingAgentState) -> dict:
     return {"code": new_code, "iteration": next_iter}
 
 
+def save_node(state: CodingAgentState) -> dict:
+    """
+    保存节点：将最终代码写入本地文件
+
+    Args:
+        state: 当前图状态（需含 output_path 与 code）
+
+    Returns:
+        更新状态字典 {"history": [保存记录]}
+
+    Raises:
+        RuntimeError: 保存失败（中文提示）
+    """
+    path = state.get("output_path", "")
+    result = save_code(path, state["code"])
+    if not result["ok"]:
+        raise RuntimeError(result["error"])
+    print(f"── [保存] 代码已保存到: {result['path']}")
+    return {"history": [{"event": "saved", "path": result["path"]}]}
+
+
 def should_continue(state: CodingAgentState) -> str:
     """
     决策逻辑单元：条件边判断函数
@@ -210,7 +243,7 @@ def build_coding_agent_graph():
     """
     构建并编译 Coding Agent 状态图（循环执行机制）
 
-    流程：generate → execute → evaluate ─(passed 或达到上限)→ END
+    流程：generate → execute → evaluate ─(passed 或达到上限)→ save → END
                                         └─(未通过)→ fix → execute → ...
     """
     graph = StateGraph(CodingAgentState)
@@ -218,39 +251,66 @@ def build_coding_agent_graph():
     graph.add_node("execute", execute_node)
     graph.add_node("evaluate", evaluate_node)
     graph.add_node("fix", fix_node)
+    graph.add_node("save", save_node)
     graph.set_entry_point("generate")
     graph.add_edge("generate", "execute")
     graph.add_edge("execute", "evaluate")
-    graph.add_conditional_edges("evaluate", should_continue, {"fix": "fix", END: END})
+    graph.add_conditional_edges("evaluate", should_continue, {"fix": "fix", "save": "save"})
     graph.add_edge("fix", "execute")
+    graph.add_edge("save", END)
     return graph.compile()
 
 
-def run(task: str, max_iterations: int = 3) -> str:
+def run(
+    task: str,
+    max_iterations: int = 3,
+    target_file: Optional[str] = None,
+    output_path: Optional[str] = None,
+) -> str:
     """
     运行完整的 Coding Agent 流程（updates + values 双模式流式输出）
 
     Args:
         task: 用户的任务需求
         max_iterations: 最大修复轮次（默认 3）
+        target_file: 指定要修改的目标文件路径（为空则从零生成）
+        output_path: 最终代码保存路径（为空时：修改模式默认写回 target_file，
+                     从零生成默认保存到 <项目根>/outputs/coding_agent_output.py）
 
     Returns:
         最终验收的代码字符串
     """
     graph = build_coding_agent_graph()
+    root = Path(__file__).resolve().parents[4]
+    # 解析最终保存路径：显式 output_path > target_file（就地写回）> 默认 outputs 目录
+    resolved_output = output_path or (target_file or str(root / "outputs" / "coding_agent_output.py"))
+
+    # 修改模式：读取目标文件内容作为初始代码
+    initial_code = ""
+    if target_file:
+        read_result = read_file(target_file)
+        if not read_result["ok"]:
+            raise RuntimeError(f"读取目标文件失败: {read_result['error']}")
+        initial_code = read_result["content"]
+        print(f"已读取目标文件: {target_file}（{len(initial_code)} 字符）")
+
     initial_state = {
         "task": task,
-        "code": "",
+        "code": initial_code,
         "execution_output": "",
         "execution_error": "",
         "feedback": "",
         "passed": False,
         "iteration": 0,
         "max_iterations": max_iterations,
+        "target_file": target_file or "",
+        "output_path": resolved_output,
     }
     print(f"\n{'=' * 60}")
     print(f"任务需求: {task}")
     print(f"最大修复轮次: {max_iterations}")
+    print(f"目标文件: {target_file or '（无，从零生成）'}")
+    print(f"保存路径: {resolved_output}")
     print(f"{'=' * 60}\n")
 
     final_state = None
@@ -270,12 +330,38 @@ def run(task: str, max_iterations: int = 3) -> str:
         print("验收结果: 通过 ✅")
     else:
         print("验收结果: 达到最大迭代次数（未通过）")
+    print(f"最终代码已保存到: {final_state['output_path']}")
     print(f"最终代码:\n{final_state['code']}")
     return final_state["code"]
 
 
+def demo_modify_file():
+    """演示修改指定文件：读取现有脚本，要求 LLM 修改后写回"""
+    root = Path(__file__).resolve().parents[4]
+    sample_path = root / "outputs" / "sample_calc.py"
+    # 准备一个示例脚本作为待修改文件
+    sample_code = (
+        "def multiply(a: int, b: int) -> int:\n"
+        "    \"\"\"返回两个整数的乘积\"\"\"\n"
+        "    return a * b\n\n"
+        "if __name__ == '__main__':\n"
+        "    print(multiply(3, 4))\n"
+    )
+    save_code(str(sample_path), sample_code)
+    print(f"示例文件已创建: {sample_path}")
+
+    task = (
+        "将 multiply 函数改为接收三个参数并返回三者乘积（multiply(a, b, c)），"
+        "并在 __main__ 中打印 multiply(2, 3, 4) 的结果。"
+    )
+    run(task, max_iterations=2, target_file=str(sample_path))
+
+
 def main():
-    """演示 Coding Agent 的代码生成与迭代修复流程"""
+    """演示 Coding Agent 的代码生成、迭代修复、保存到本地与修改指定文件"""
+    print("=" * 60)
+    print("场景一：从零生成代码并保存到本地")
+    print("=" * 60)
     task = (
         "编写一个函数 fibonacci(n)，返回第 n 个斐波那契数（n 从 1 开始计数，fibonacci(1)=0, fibonacci(2)=1）。\n"
         "要求：\n"
@@ -283,6 +369,11 @@ def main():
         "2. 在 if __name__ == '__main__': 中打印 fibonacci(1) 到 fibonacci(10) 的结果。"
     )
     run(task, max_iterations=3)
+
+    print("\n" + "=" * 60)
+    print("场景二：修改指定文件")
+    print("=" * 60)
+    demo_modify_file()
 
 
 if __name__ == "__main__":

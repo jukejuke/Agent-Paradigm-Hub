@@ -22,4 +22,6 @@ class CodingAgentState(TypedDict):
     passed: bool                    # 是否通过验收（规则 + LLM 评审综合判定）
     iteration: int                  # 当前已执行的修复轮次
     max_iterations: int             # 最大允许的修复轮次（防止无限循环）
+    target_file: str                # 指定要修改的目标文件路径（空字符串表示从零生成）
+    output_path: str                # 最终代码保存路径
     history: Annotated[list[dict], operator.add]  # 迭代历史记录（归约器追加，用于上下文跟踪）

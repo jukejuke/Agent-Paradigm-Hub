@@ -8,6 +8,7 @@ Coding Agent 单元测试（无需 LLM / API Key）
 """
 import pathlib
 import sys
+import tempfile
 import unittest
 
 from langgraph.graph import END
@@ -98,14 +99,64 @@ class TestStripCodeFence(unittest.TestCase):
         self.assertEqual(prompts.strip_code_fence(text), "print(1)")
 
 
+class TestReadFile(unittest.TestCase):
+    """read_file 工具：读取已存在文件 / 不存在的文件"""
+
+    def test_read_existing_file(self):
+        # 读取已存在的文件：ok=True，内容一致
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "hello.txt"
+            path.write_text("print('hello')", encoding="utf-8")
+            result = tools.read_file(str(path))
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["content"], "print('hello')")
+            self.assertEqual(result["error"], "")
+
+    def test_read_missing_file(self):
+        # 读取不存在的文件：ok=False + error，不抛异常
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "no_such_file.py"
+            result = tools.read_file(str(path))
+            self.assertFalse(result["ok"])
+            self.assertTrue(result["error"])
+
+
+class TestSaveCode(unittest.TestCase):
+    """save_code 工具：正常保存 / 自动创建父目录 / 非法路径"""
+
+    def test_save_and_content(self):
+        # 正常保存到临时目录：ok=True，回读内容一致
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "out.py"
+            result = tools.save_code(str(path), "print(1)")
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["path"], str(path))
+            self.assertEqual(path.read_text(encoding="utf-8"), "print(1)")
+
+    def test_save_creates_parent_dir(self):
+        # 父目录不存在时自动创建
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "a" / "b" / "out.py"
+            result = tools.save_code(str(path), "x = 1")
+            self.assertTrue(result["ok"])
+            self.assertTrue(path.exists())
+
+    def test_save_invalid_path(self):
+        # 非法路径（指向已存在的目录）：ok=False + error，不抛异常
+        with tempfile.TemporaryDirectory() as tmp:
+            result = tools.save_code(tmp, "print(1)")
+            self.assertFalse(result["ok"])
+            self.assertTrue(result["error"])
+
+
 class TestBuildGraph(unittest.TestCase):
     """状态图可成功构建（不调用 LLM / 不需要 API Key）"""
 
     def test_graph_contains_expected_nodes(self):
-        # 构建编译后的图，校验四个核心节点
+        # 构建编译后的图，校验五个核心节点（含保存节点）
         compiled = agent.build_coding_agent_graph()
         names = {node.name for node in compiled.get_graph().nodes.values()}
-        self.assertTrue({"generate", "execute", "evaluate", "fix"} <= names)
+        self.assertTrue({"generate", "execute", "evaluate", "fix", "save"} <= names)
 
 
 if __name__ == "__main__":
