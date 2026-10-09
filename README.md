@@ -19,7 +19,7 @@
 | 🚀 **开箱即用，零门槛体验**       | 只需填入 API Key，`python -m examples.xxx` 即可运行完整 Demo；每个示例自带 `main()` 函数与演示问题，无需自己拼凑                                            |
 | 🧱 **模块化结构，易扩展**        | 统一的 `utils.llm_client.LLMClient` 屏蔽不同 LLM 厂商差异，新增 Provider、新增工具、新增范式都有清晰的扩展套路                                               |
 | 📝 **中文注释 + 中文 Prompt** | 所有代码头注释、函数级注释、系统 Prompt 全部为中文，便于国内开发者快速理解 Agent 内部工作机制                                                                      |
-| 🛠️ **配套实用工具**          | [`tools/prompt_optimizer`](tools/README.md)：基于 Reflection + LangGraph 的编程提示词优化 Agent；[`tools/requirement_optimizer`](tools/README.md)：需求工作量放大器，把简短需求改写成字数相近但显得更专业复杂的版本 |
+| 🛠️ **配套实用工具**          | [`tools/prompt_optimizer`](tools/README.md)：基于 Reflection + LangGraph 的编程提示词优化 Agent；[`tools/requirement_optimizer`](tools/README.md)：需求工作量放大器（Evaluator-Optimizer · LangGraph），把简短需求改写成字数相近但显得更专业复杂的版本 |
 
 ***
 
@@ -60,7 +60,7 @@ pip install -r requirements-langgraph.txt
 
 内容：在方案 A 基础上追加 `langgraph` / `langchain-openai`，用于运行每个范式的 `langgraph/` 实现。
 
-> 🛠️ 想使用 [`tools/prompt_optimizer`](tools/README.md) 提示词优化工具，同样只需方案 C 的依赖，也可单独安装：
+> 🛠️ 想使用 [`tools/prompt_optimizer`](tools/README.md) 提示词优化工具或 [`tools/requirement_optimizer`](tools/README.md) 需求工作量放大器，同样只需方案 C 的依赖，也可单独安装：
 >
 > ```bash
 > pip install -r tools/requirements.txt
@@ -97,6 +97,11 @@ DEFAULT_MAX_TOKENS=4096       # 单次调用最大输出 token
 # --- 可选：提示词优化工具（tools/prompt_optimizer）---
 # PROMPT_OPTIMIZER_TEMPERATURE=0.7
 # PROMPT_OPTIMIZER_MAX_ITERATIONS=3
+
+# --- 可选：需求工作量放大器（tools/requirement_optimizer）---
+# REQUIREMENT_OPTIMIZER_TEMPERATURE=0.7
+# REQUIREMENT_OPTIMIZER_MAX_ITERATIONS=3
+# REQUIREMENT_OPTIMIZER_PASS_SCORE=7
 ```
 
 > 💡 如果你使用 **兼容 OpenAI 协议的中转服务 / 本地模型**（如 vLLM、Ollama、LM Studio 等），额外加一行：
@@ -218,10 +223,10 @@ Agent-Paradigm-Hub/
 │   │   ├── prompts.py                    # generate / reflect / refine 系统提示词
 │   │   ├── agent.py                      # 核心 Agent 实现（图构建 + 节点 + 路由）
 │   │   └── __main__.py                   # CLI 入口
-│   ├── requirement_optimizer/          # 需求工作量放大器（原生 · LLMClient）
-│   │   ├── config.py                     # 模型 / 温度配置（parents[2] 加载根目录 .env）
-│   │   ├── prompts.py                    # 工作量放大 + 压缩 系统提示词
-│   │   ├── optimizer.py                  # 核心逻辑（放大 + 字数兜底截断 + 限流重试）
+│   ├── requirement_optimizer/          # 需求工作量放大器（Evaluator-Optimizer · LangGraph）
+│   │   ├── config.py                     # 模型 / 温度 / 迭代次数 / 通过分数 配置
+│   │   ├── prompts.py                    # generate / evaluate / optimize 系统提示词
+│   │   ├── agent.py                      # 核心 Agent 实现（图构建 + 节点 + 路由）
 │   │   └── __main__.py                   # CLI 入口
 │   ├── requirements.txt                # 工具依赖（langgraph / langchain-openai）
 │   ├── .env.example                    # 工具环境变量模板
@@ -760,24 +765,24 @@ print(optimized)  # 复制给 Trae / Claude Code / OpenCode 执行
 
 > 📖 更详细的用法、目录结构与工作原理见 [tools/README.md](tools/README.md)。
 
-### 需求工作量放大器（原生 · LLMClient）
+### 需求工作量放大器（Evaluator-Optimizer · LangGraph）
 
 **它能做什么**：输入一段简短朴素的需求，输出一份「看起来工作量更大」的优化后需求——通过用词替换（「登录」→「身份认证子系统」）、融入非功能属性词（高性能 / 可扩展 / 安全）、使用体现复杂度的动词（设计并实现 / 集成 / 优化）等技巧，让需求显得更专业、更复杂，**同时字数与原需求保持相近（±30%）**。
 
-**核心流程**：
+**核心流程**（Evaluator-Optimizer 循环，LangGraph 编排）：
 
 ```
 原始需求
   ↓
-amplify：LLM 以「需求分析师」身份改写，用词升级 + 融入技术细节
+generate：LLM 以「需求分析师」身份产出工作量放大初稿（用词升级 + 技术细节）
   ↓
-字数检查：输出字数 > 原需求 × 130% ?
-  ├─ 否 → 直接输出
-  └─ 是 → compress：LLM 压缩到目标字数内，保留专业表述
-              ↓
-         仍超限？→ 硬性截断兜底（保证绝不突破 130%）
+evaluate：QA 评估器按 4 维度打分（工作量饱满度 / 字数控制 / 原意忠实度 / 表达流畅度）
+          输出 Score: X/10 · Feedback · Pass: yes/no
+  ↓  条件路由
+  ├─ Pass=yes 或 score ≥ 通过分数 或 iteration ≥ 最大迭代次数 → 结束
+  └─ 否则 → optimize：LLM 根据反馈逐条改进，回到 evaluate
   ↓
-输出优化后需求（自动剥离 Markdown 代码围栏 + 打印字数对比）
+输出优化后需求（自动剥离 Markdown 代码围栏 + 130% 硬性截断兜底 + 打印字数对比）
 ```
 
 **运行命令**：
@@ -801,12 +806,13 @@ print(result)
 
 **可调参数**：
 
-| 环境变量                          | 说明                           | 默认值        |
-| --------------------------------- | ------------------------------ | ------------- |
-| `OPENAI_API_KEY` / `OPENAI_MODEL` | 模型凭据与模型名               | `gpt-4o-mini` |
-| `OPENAI_BASE_URL`                 | 兼容 OpenAI 协议的中转 / 本地地址 | 无           |
-| `DEFAULT_PROVIDER`                | LLM 提供商（`openai` / `anthropic`） | `openai` |
-| `DEFAULT_TEMPERATURE`             | 采样温度                       | `0.7`         |
+| 环境变量                                | 说明                                   | 默认值        |
+| --------------------------------------- | -------------------------------------- | ------------- |
+| `OPENAI_API_KEY` / `OPENAI_MODEL`       | 模型凭据与模型名（仅支持 OpenAI 协议） | `gpt-4o-mini` |
+| `OPENAI_BASE_URL`                       | 兼容 OpenAI 协议的中转 / 本地地址      | 无            |
+| `REQUIREMENT_OPTIMIZER_TEMPERATURE`     | 采样温度                               | `0.7`         |
+| `REQUIREMENT_OPTIMIZER_MAX_ITERATIONS`  | 评估-优化最大迭代次数                   | `3`           |
+| `REQUIREMENT_OPTIMIZER_PASS_SCORE`      | 评估通过的最低分数（1-10）              | `7`           |
 
 > 📖 更详细的用法与工作原理见 [tools/README.md](tools/README.md)。
 
