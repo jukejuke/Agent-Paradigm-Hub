@@ -33,7 +33,7 @@ from tools.requirement_optimizer.prompts import (
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 # 字数容差上限（原需求的 130%），超过则硬性截断兜底
-MAX_LENGTH_RATIO = 1.3
+MAX_LENGTH_RATIO = 5
 
 
 class OptimizerState(TypedDict):
