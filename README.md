@@ -12,13 +12,13 @@
 
 ## ✨ 项目亮点
 
-| 亮点                      | 说明                                                                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 🎓 **10 种主流范式，全覆盖**     | 从经典的 ReAct / Plan-and-Execute，到前沿的 Reflection / Evaluator-Optimizer，3 大分类（单智能体 / 多智能体 / 工作流）共 10 种范式一次学透                    |
-| ⚖️ **原生 vs 框架，三实现对照**   | 每个示例既有原生 LLM API 手写的「从零实现版」（懂原理）、LangChain 的「生产版」（Runnable、AgentExecutor），也有 LangGraph 的「图编排版」（StateGraph 显式建模循环 / 并发 / 路由） |
-| 🚀 **开箱即用，零门槛体验**       | 只需填入 API Key，`python -m examples.xxx` 即可运行完整 Demo；每个示例自带 `main()` 函数与演示问题，无需自己拼凑                                            |
-| 🧱 **模块化结构，易扩展**        | 统一的 `utils.llm_client.LLMClient` 屏蔽不同 LLM 厂商差异，新增 Provider、新增工具、新增范式都有清晰的扩展套路                                               |
-| 📝 **中文注释 + 中文 Prompt** | 所有代码头注释、函数级注释、系统 Prompt 全部为中文，便于国内开发者快速理解 Agent 内部工作机制                                                                      |
+| 亮点                      | 说明                                                                                                                                                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🎓 **10 种主流范式，全覆盖**     | 从经典的 ReAct / Plan-and-Execute，到前沿的 Reflection / Evaluator-Optimizer，3 大分类（单智能体 / 多智能体 / 工作流）共 10 种范式一次学透                                                                                                |
+| ⚖️ **原生 vs 框架，三实现对照**   | 每个示例既有原生 LLM API 手写的「从零实现版」（懂原理）、LangChain 的「生产版」（Runnable、AgentExecutor），也有 LangGraph 的「图编排版」（StateGraph 显式建模循环 / 并发 / 路由）                                                                             |
+| 🚀 **开箱即用，零门槛体验**       | 只需填入 API Key，`python -m examples.xxx` 即可运行完整 Demo；每个示例自带 `main()` 函数与演示问题，无需自己拼凑                                                                                                                        |
+| 🧱 **模块化结构，易扩展**        | 统一的 `utils.llm_client.LLMClient` 屏蔽不同 LLM 厂商差异，新增 Provider、新增工具、新增范式都有清晰的扩展套路                                                                                                                           |
+| 📝 **中文注释 + 中文 Prompt** | 所有代码头注释、函数级注释、系统 Prompt 全部为中文，便于国内开发者快速理解 Agent 内部工作机制                                                                                                                                                  |
 | 🛠️ **配套实用工具**          | [`tools/prompt_optimizer`](tools/README.md)：基于 Reflection + LangGraph 的编程提示词优化 Agent；[`tools/requirement_optimizer`](tools/README.md)：需求工作量放大器（Evaluator-Optimizer · LangGraph），把简短需求改写成字数相近但显得更专业复杂的版本 |
 
 ***
@@ -624,12 +624,12 @@ python -m examples.workflow.evaluator_optimizer.langgraph.workflow
 
 **四大核心组件**：
 
-| 组件                     | 模块                        | 职责                                                     |
-| ---------------------- | --------------------------- | ------------------------------------------------------ |
-| 智能体状态管理模块 | `langgraph/state.py`        | `CodingAgentState` + 迭代历史（跟踪代码生成上下文）                  |
-| 工具调用接口           | `langgraph/tools.py`        | `run_python` 沙箱代码执行（subprocess + 超时 + 错误捕获）          |
-| 决策逻辑单元           | `langgraph/agent.py`        | `evaluate` 节点 + `should_continue` 条件边                 |
-| 循环执行机制           | `langgraph/agent.py`        | `StateGraph` 条件循环（generate → execute → evaluate ⇄ fix） |
+| 组件        | 模块                   | 职责                                                     |
+| --------- | -------------------- | ------------------------------------------------------ |
+| 智能体状态管理模块 | `langgraph/state.py` | `CodingAgentState` + 迭代历史（跟踪代码生成上下文）                   |
+| 工具调用接口    | `langgraph/tools.py` | `run_python` 沙箱代码执行（subprocess + 超时 + 错误捕获）            |
+| 决策逻辑单元    | `langgraph/agent.py` | `evaluate` 节点 + `should_continue` 条件边                  |
+| 循环执行机制    | `langgraph/agent.py` | `StateGraph` 条件循环（generate → execute → evaluate ⇄ fix） |
 
 **核心流程**：
 
@@ -661,7 +661,7 @@ python -m examples.single_agent.coding_agent.langgraph.agent
 python -m pytest examples/single_agent/coding_agent/tests/ -q
 ```
 
-📖 详细说明见 [coding_agent/langgraph/README.md](examples/single_agent/coding_agent/langgraph/README.md)。
+📖 详细说明见 [coding\_agent/langgraph/README.md](examples/single_agent/coding_agent/langgraph/README.md)。
 
 ***
 
@@ -671,11 +671,11 @@ python -m pytest examples/single_agent/coding_agent/tests/ -q
 
 通过火山方舟「Agent Plan」的 OpenAI 兼容接口调用豆包图像生成模型 `doubao-seedream-5-0-lite-260128`，按提示词完成图片的生成、风格修改与文字修改：
 
-| 示例 | 能力 | 运行命令 |
-| --- | --- | --- |
-| [example.py](examples/multimodal/seedream/example.py) | 基础能力：文生图 / 图生图（含多图参考） / 联网搜索生图 / 图标生成 | `python -m examples.multimodal.seedream.example` |
-| [style_edit.py](examples/multimodal/seedream/prompt_edit/style_edit.py) | 提示词修改图片样式（风格迁移：水墨 / 赛博朋克 / 油画 / 3D 卡通） | `python -m examples.multimodal.seedream.prompt_edit.style_edit` |
-| [text_edit.py](examples/multimodal/seedream/prompt_edit/text_edit.py) | 提示词修改图片文字（文生图带文字 / 图生图改字） | `python -m examples.multimodal.seedream.prompt_edit.text_edit` |
+| 示例                                                                       | 能力                                     | 运行命令                                                            |
+| ------------------------------------------------------------------------ | -------------------------------------- | --------------------------------------------------------------- |
+| [example.py](examples/multimodal/seedream/example.py)                    | 基础能力：文生图 / 图生图（含多图参考） / 联网搜索生图 / 图标生成  | `python -m examples.multimodal.seedream.example`                |
+| [style\_edit.py](examples/multimodal/seedream/prompt_edit/style_edit.py) | 提示词修改图片样式（风格迁移：水墨 / 赛博朋克 / 油画 / 3D 卡通） | `python -m examples.multimodal.seedream.prompt_edit.style_edit` |
+| [text\_edit.py](examples/multimodal/seedream/prompt_edit/text_edit.py)   | 提示词修改图片文字（文生图带文字 / 图生图改字）              | `python -m examples.multimodal.seedream.prompt_edit.text_edit`  |
 
 说明：
 
@@ -691,11 +691,11 @@ python -m pytest examples/single_agent/coding_agent/tests/ -q
 
 通过 Agnes AI 的 OpenAI 兼容接口调用图像生成模型 `agnes-image-2.5-flash`，按提示词完成图片的生成、样式修改与文字编辑（加字 / 改字 / 删字），模块按「配置 / 核心 / 工具 / 示例 / 文档」五类目录组织：
 
-| 示例 | 能力 | 运行命令 |
-| --- | --- | --- |
-| [example_generate.py](examples/multimodal/agnes/examples/example_generate.py) | 文生图：根据提示词生成图片（支持分辨率档位 / 宽高比） | `python -m examples.multimodal.agnes.examples.example_generate` |
-| [example_style_edit.py](examples/multimodal/agnes/examples/example_style_edit.py) | 图生图样式修改：风格迁移（水墨 / 赛博朋克 / 油画） | `python -m examples.multimodal.agnes.examples.example_style_edit` |
-| [example_text_edit.py](examples/multimodal/agnes/examples/example_text_edit.py) | 文字编辑：文生图带文字 / 图生图改字 / 图生图删字 | `python -m examples.multimodal.agnes.examples.example_text_edit` |
+| 示例                                                                                  | 能力                           | 运行命令                                                              |
+| ----------------------------------------------------------------------------------- | ---------------------------- | ----------------------------------------------------------------- |
+| [example\_generate.py](examples/multimodal/agnes/examples/example_generate.py)      | 文生图：根据提示词生成图片（支持分辨率档位 / 宽高比） | `python -m examples.multimodal.agnes.examples.example_generate`   |
+| [example\_style\_edit.py](examples/multimodal/agnes/examples/example_style_edit.py) | 图生图样式修改：风格迁移（水墨 / 赛博朋克 / 油画） | `python -m examples.multimodal.agnes.examples.example_style_edit` |
+| [example\_text\_edit.py](examples/multimodal/agnes/examples/example_text_edit.py)   | 文字编辑：文生图带文字 / 图生图改字 / 图生图删字  | `python -m examples.multimodal.agnes.examples.example_text_edit`  |
 
 说明：
 
@@ -709,7 +709,7 @@ python -m pytest examples/single_agent/coding_agent/tests/ -q
 
 ## 🛠️ 配套工具（Tools）
 
-除了范式示例，仓库还提供一个可直接使用的**编程输入提示词优化 Agent**：[tools/prompt_optimizer](tools/README.md)。
+除了范式示例，仓库还提供一个可直接使用的**编程输入提示词优化 Agent**：[tools/prompt\_optimizer](tools/README.md)。
 
 ### 编程输入提示词优化 Agent（Reflection · LangGraph）
 
@@ -756,12 +756,12 @@ print(optimized)  # 复制给 Trae / Claude Code / OpenCode 执行
 
 **可调参数**：
 
-| 环境变量                          | 说明                            | 默认值        |
-| --------------------------------- | ------------------------------- | ------------- |
-| `OPENAI_API_KEY` / `OPENAI_MODEL` | 模型凭据与模型名                | `gpt-4o-mini` |
-| `OPENAI_BASE_URL`                 | 兼容 OpenAI 协议的中转 / 本地地址 | 无           |
-| `PROMPT_OPTIMIZER_TEMPERATURE`    | 采样温度                        | `0.7`         |
-| `PROMPT_OPTIMIZER_MAX_ITERATIONS` | 反思-改进最大迭代次数           | `3`           |
+| 环境变量                              | 说明                     | 默认值           |
+| --------------------------------- | ---------------------- | ------------- |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | 模型凭据与模型名               | `gpt-4o-mini` |
+| `OPENAI_BASE_URL`                 | 兼容 OpenAI 协议的中转 / 本地地址 | 无             |
+| `PROMPT_OPTIMIZER_TEMPERATURE`    | 采样温度                   | `0.7`         |
+| `PROMPT_OPTIMIZER_MAX_ITERATIONS` | 反思-改进最大迭代次数            | `3`           |
 
 > 📖 更详细的用法、目录结构与工作原理见 [tools/README.md](tools/README.md)。
 
@@ -806,13 +806,13 @@ print(result)
 
 **可调参数**：
 
-| 环境变量                                | 说明                                   | 默认值        |
-| --------------------------------------- | -------------------------------------- | ------------- |
-| `OPENAI_API_KEY` / `OPENAI_MODEL`       | 模型凭据与模型名（仅支持 OpenAI 协议） | `gpt-4o-mini` |
-| `OPENAI_BASE_URL`                       | 兼容 OpenAI 协议的中转 / 本地地址      | 无            |
-| `REQUIREMENT_OPTIMIZER_TEMPERATURE`     | 采样温度                               | `0.7`         |
-| `REQUIREMENT_OPTIMIZER_MAX_ITERATIONS`  | 评估-优化最大迭代次数                   | `3`           |
-| `REQUIREMENT_OPTIMIZER_PASS_SCORE`      | 评估通过的最低分数（1-10）              | `7`           |
+| 环境变量                                   | 说明                      | 默认值           |
+| -------------------------------------- | ----------------------- | ------------- |
+| `OPENAI_API_KEY` / `OPENAI_MODEL`      | 模型凭据与模型名（仅支持 OpenAI 协议） | `gpt-4o-mini` |
+| `OPENAI_BASE_URL`                      | 兼容 OpenAI 协议的中转 / 本地地址  | 无             |
+| `REQUIREMENT_OPTIMIZER_TEMPERATURE`    | 采样温度                    | `0.7`         |
+| `REQUIREMENT_OPTIMIZER_MAX_ITERATIONS` | 评估-优化最大迭代次数             | `3`           |
+| `REQUIREMENT_OPTIMIZER_PASS_SCORE`     | 评估通过的最低分数（1-10）         | `7`           |
 
 > 📖 更详细的用法与工作原理见 [tools/README.md](tools/README.md)。
 
